@@ -1,0 +1,39 @@
+body {
+  background: #ababab !important;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  opacity: 0.7;
+}
+
+.selection_matches.overlay {
+  left: 0;
+  opacity: 1;
+}
+
+canvas {
+  border: 1px solid #000;
+  margin: 8px;
+}
+
+img {
+  margin: 4px;
+}
+
+#matches img {
+  transform: rotate(180deg);
+}
+
+#L1_matches .arrow {
+  vertical-align: top;
+  margin-top: 6px;
+  display: inline-block;
+}
+
+#L2_matches .arrow {
+  vertical-align: top;
+  margin-top: 18px;
+  display: inline-block;
+}
