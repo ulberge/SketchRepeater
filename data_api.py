@@ -32,55 +32,7 @@ def get_layers_output(layers, layer_names, img):
     return acts
 
 
-def get_pieces_for_layer(img, acts, layer_meta, step=1, thresh=None, thresh_pct=1):
-    '''
-    Given an image, its activations and a layer, return pieces of that image, their corresponding L2 normalized activation vectors, and their
-    locations within the image
-    '''
-    layer_name, stride, f_size, padding = layer_meta
-
-    if padding > 0:
-        img_f = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[0, 0, 0])
-
-    k, h, w, c = acts.shape
-    acts_pieces = []
-    img_pieces = []
-    locations = []
-    t_count = 0
-    random.seed(30)
-    for y in range(0, h, step):
-        for x in range(0, w, step):
-            # get section of original image
-            x_start = x * stride
-            x_end = x_start + f_size
-            y_start = y * stride
-            y_end = y_start + f_size
-            img_piece = img[y_start: y_end, x_start: x_end]
-
-            # skip if threshold for empty images not met
-            if thresh is not None:
-                if np.sum(img_piece) < thresh and random.random() > thresh_pct:
-                    t_count += 1
-                    continue
-
-            # save image piece and location
-            img_pieces.append(img_piece)
-            locations.append({'x': x_start, 'y': y_start})
-
-            # save acts
-            acts_piece = acts[0, y, x, :]
-            # L2 normalization
-            feat_norm = np.sqrt(np.sum(acts_piece ** 2))
-            if feat_norm > 0:
-                acts_piece = acts_piece / feat_norm
-            acts_pieces.append(acts_piece)
-
-    print('Filtered ' + str(t_count) + ' of ' + str(len(acts_pieces) + t_count) + ' with threshold')
-
-    return acts_pieces, img_pieces, locations
-
-
-def get_pieces_for_layer2(img, acts, layer_meta, pct=1, thresh=None, thresh_pct=1):
+def get_pieces_for_layer(img, acts, layer_meta, pct=1, thresh=None, thresh_pct=1):
     '''
     Given an image, its activations and a layer, return pieces of that image, their corresponding L2 normalized activation vectors, and their
     locations within the image
@@ -142,11 +94,11 @@ def get_pieces_for_img(layers, layer_names, img):
     acts_pieces_by_layer = []
     img_pieces_by_layer = []
     locations_by_layer = []
-    percents = [0.3, 0.5, 0.01, 0.01, 0.01]
-    thresh_percents = [0.1, 1, 0.01, 0.01, 0.01]
+    percents = [0.3, 0.5, 1, 1, 1]
+    thresh_percents = [0.1, 1, 1, 1, 1]
     for i, acts in enumerate(acts_by_layer):
         start_time_layer = time.time()
-        acts_pieces, img_pieces, locations = get_pieces_for_layer2(img, acts, layers_meta[i], percents[i], 0.03, thresh_percents[i])
+        acts_pieces, img_pieces, locations = get_pieces_for_layer(img, acts, layers_meta[i], percents[i], 0.03, thresh_percents[i])
 
         acts_pieces_by_layer.append(acts_pieces)
         img_pieces_by_layer.append(img_pieces)
@@ -196,7 +148,7 @@ def load_corpus(sample_rate, pcts, thresholds, thresholdPcts):
         acts_by_layer = get_layers_output(layers, layer_names, img)
 
         for i, acts in enumerate(acts_by_layer):
-            acts_pieces, img_pieces, locations = get_pieces_for_layer2(img, acts, layers_meta[i], pcts[i], thresholds[i], thresholdPcts[i])
+            acts_pieces, img_pieces, locations = get_pieces_for_layer(img, acts, layers_meta[i], pcts[i], thresholds[i], thresholdPcts[i])
 
             acts_pieces_by_layer[i].extend(acts_pieces)
             img_pieces_by_layer[i].extend(img_pieces)

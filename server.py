@@ -52,21 +52,23 @@ def suggestions():
     befores = request.args.getlist('befores[]')
     afters = request.args.getlist('afters[]')
     img = request.args.get('img')
+    bounds = request.args.getlist('bounds[]')
+    bounds = [float(i) for i in bounds]
     n = int(request.args.get('n'))
 
     befores_f = map(get_img_array, befores)
     afters_f = map(get_img_array, afters)
     img_f = get_img_array(img)
 
-    save_img(befores_f[0], 'before' + str(0) + '.png')
+    # save_img(befores_f[0], 'before' + str(0) + '.png')
 
     # find pieces of images that are similar
-    befores_matches, before_matches_locations = repeater.get_similar_before(img_f, befores_f, n)
+    befores_matches, before_matches_locations = repeater.get_similar_before(img_f, befores_f, bounds, n)
 
-    for i, before in enumerate(befores_matches[0]):
-        save_img(before, 'before_matches' + str(i) + '.png')
+    # for i, before in enumerate(befores_matches[0]):
+    #     save_img(before, 'before_matches' + str(i) + '.png')
 
-    afters_matches = repeater.get_similar_after(afters_f, n)
+    # afters_matches = repeater.get_similar_after(afters_f, n)
 
     # align images
     # afters_matches_aligned = []
@@ -85,7 +87,7 @@ def suggestions():
         result[i] = {
             'locations': before_matches_locations[i],
             'locationImgs': map(get_data_url, befores_matches[i]),
-            'suggestions': map(get_data_url, afters_matches[i]),
+            # 'suggestions': map(get_data_url, afters_matches[i]),
             # 'suggestionsAligned': map(get_data_url, afters_matches_aligned[i])
         }
 

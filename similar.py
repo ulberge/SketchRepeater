@@ -93,6 +93,24 @@ def align_images(im1_gray, im2_gray):
 #     plt.clf()
 
 
+def overlap(r0, r1):
+    r0c0x, r0c0y, r0c1x, r0c1y = r0
+    r1c0x, r1c0y, r1c1x, r1c1y = r1
+
+    # is a corner of r0 inside r1?
+    if r0c0x >= r1c0x and r0c0x <= r1c1x and r0c0y >= r1c0y and r0c0y <= r1c1y:
+        return True
+    if r0c1x >= r1c0x and r0c1x <= r1c1x and r0c1y >= r1c0y and r0c1y <= r1c1y:
+        return True
+
+    if r1c0x >= r0c0x and r1c0x <= r0c1x and r1c0y >= r0c0y and r1c0y <= r0c1y:
+        return True
+    if r1c1x >= r0c0x and r1c1x <= r0c1x and r1c1y >= r0c0y and r1c1y <= r0c1y:
+        return True
+
+    return False
+
+
 class Repeater:
     def __init__(self):
         self.layers = load_layers('./data/model_without_order_info_224.mat')
@@ -108,14 +126,15 @@ class Repeater:
         # self.lshf.fit(self.acts)
         # print('Finished building LSHForest')
 
-    def get_similar_before(self, img, befores, n):
+    def get_similar_before(self, img, befores, bounds, n):
         start_time = time.time()
         img_f = format(img)
         print('image to search', img_f.shape)
         # get acts at each layer
         # get imgs and acts for this img
         print('Get pieces of whole img')
-        acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, self.layer_names, img_f)
+        acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, ['conv1', 'conv2', 'conv3', 'conv4', 'conv5'], img_f)
+        # acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, self.layer_names, img_f)
         print('Finished getting pieces of whole img')
 
         match_thresholds = []
@@ -123,7 +142,7 @@ class Repeater:
         match_locations_by_layer = []
         time_match = 0
         time_acts = 0
-        for i, before in enumerate(befores[:2]):
+        for i, before in enumerate(befores):
             print('Getting acts for L' + str(i + 1))
             start_time_acts = time.time()
             before_f = format(before)
@@ -149,8 +168,20 @@ class Repeater:
             # find n closest matches...
             error = []
             print('shapes', acts_pieces[0].shape, target.shape)
-            for acts_piece in acts_pieces:
-                error.append(np.sum((acts_piece - target) ** 2))
+            for i, acts_piece in enumerate(acts_pieces):
+                # if this piece overlaps bounds, penalize heavily
+                h, w, c = img_pieces[i].shape
+                piece_bounds = [
+                    locations[i]['x'], locations[i]['y'],
+                    locations[i]['x'] + w, locations[i]['y'] + h
+                ]
+                penalty = 0
+                print(piece_bounds, bounds)
+                if overlap(piece_bounds, bounds):
+                    print(piece_bounds, bounds)
+                    penalty = 1000000
+
+                error.append(np.sum((acts_piece - target) ** 2) + penalty)
             sort_idx = np.argsort(error)
             n_safe = min(n, len(sort_idx))
             top_matches = []

@@ -4,7 +4,7 @@
 
   const selectionSizes = [15, 45, 81, 105, 129];
   // const selectionColors = ['#A74661', '#956C89', '#8490B0', '#71B6D7', '#67CBEF'];
-  const selectionColors = ['#A74661', '#67CBEF', '#956C89', '#8490B0', '#71B6D7'];
+  const selectionColors = ['#A74661', '#956C89', '#8490B0', '#71B6D7', '#67CBEF'];
   const sketches = {
     stored: null,
     temp: null,
@@ -15,7 +15,9 @@
     selections: {
       p0: [],
       p1: [],
+      pmark: []
     },
+    ai: []
   };
   let drawTimer = null;
 
@@ -23,10 +25,9 @@
   * Given a before and after at various scales and an image, return
   * suggestions for transformations to the image at those scales.
   */
-  function getSuggestions(befores, afters, img, scale, n=4) {
+  function getSuggestions(befores, afters, img, bounds, n=1) {
     console.log('fetching suggestions...');
-    const data = { befores, afters, img, n };
-    console.log('Suggested Layer ' + (scale + 1));
+    const data = { befores, afters, img, bounds, n };
 
     // console.log(befores);
     // const i = 1;
@@ -57,21 +58,21 @@
           // add suggestions at this scale to canvas
         sketches.comp2.stroke(sketches.comp.color(selectionColors[i]));
 
-        const drawSuggestions = (j) => {
-          if (j >= suggestions.length - 2) {
-            return;
-          }
-          drawDataURLToP(sketches.comp, suggestions[j], locations[j]);
-          drawTimer = setTimeout(() => {
-            const comp = sketches.comp.get();
-            sketches.stored.image(comp, 0, 0);
-            sketches.comp.clear();
-            drawSuggestions(j + 1);
-          }, 1000);
-        }
-        if (i === 1) {
-          drawSuggestions(0);
-        }
+        // const drawSuggestions = (j) => {
+        //   if (j >= suggestions.length - 2) {
+        //     return;
+        //   }
+        //   drawDataURLToP(sketches.comp, suggestions[j], locations[j]);
+        //   drawTimer = setTimeout(() => {
+        //     const comp = sketches.comp.get();
+        //     sketches.stored.image(comp, 0, 0);
+        //     sketches.comp.clear();
+        //     drawSuggestions(j + 1);
+        //   }, 1000);
+        // }
+        // if (i === 1) {
+        //   drawSuggestions(0);
+        // }
 
         locations.forEach((location, j) => {
           const { x, y } = location;
@@ -159,75 +160,82 @@
     }
   }
 
-  function getChangeSelections(p, bounds, lastPos) {
+  const layers_meta = [
+    [
+        // params for L1
+        'conv1',  // layer_name
+        // 71,  // output_size
+        3,  // stride
+        15,  // f_size
+        0  // padding
+    ],
+    [
+        // params for L2
+        'conv2',  // layer_name
+        // 31,  // output_size
+        6,  // stride
+        45,  // f_size
+        0  // padding
+    ],
+    [
+        // params for L3
+        'conv3',  // layer_name
+        // 15,  // output_size
+        12,  // stride
+        81,  // f_size
+        12  // padding
+    ],
+    [
+        // params for L4
+        'conv4',  // layer_name
+        // 15,  // output_size
+        12,  // stride
+        105,  // f_size
+        24  // padding
+    ],
+    [
+        // params for L5
+        'conv5',  // layer_name
+        // 15,  // output_size
+        12,  // stride
+        129,  // f_size
+        36  // padding
+    ]
+  ];
+
+  function getChangeSelections2(p, bounds) {
     const [ bStartX, bStartY, bEndX, bEndY ] = bounds.map(bound => Math.floor(bound));
-    const minPad = 0;
-    const [ lastPosX, lastPosY ] = lastPos.map(v => Math.floor(v));
+    const boundsWidth = bEndX - bStartX;
+    const boundsHeight = bEndY - bStartY;
 
-    // get selections containing end of edit (with a little padding) centered as much as possible
-    const selectionBoundsBySize = selectionSizes.map(selectionSize => {
-      // padding to make selection size
-      let padToDistribute = selectionSize - 1;
+    // get smallest bounds of activation selection area
+    const selectionBoundsBySize = selectionSizes.map((selectionSize, i) => {
+      const [ layerName, stride, fSize, padding ] = layers_meta[i];
+      // How many full strides at this layer do you need to add to the smallest filter to get a section of the image that
+      // will fit the change bounds
+      const stridesX = Math.max(0, Math.ceil((boundsWidth - fSize) / stride));
+      const stridesY = Math.max(0, Math.ceil((boundsHeight - fSize) / stride));
+      // Use the max, get a square
+      const sizeToSelect = Math.max(fSize + (stridesX * stride), fSize + (stridesY * stride));
+      const horPad = (sizeToSelect - boundsWidth) / 2;
+      const vertPad =(sizeToSelect - boundsHeight) / 2;
 
-      // add min padding
-      const selectionBounds = [lastPosX - minPad, lastPosY - minPad, lastPosX + minPad + 1, lastPosY + minPad + 1];
-      padToDistribute -= 2 * minPad;
-      // distribute padding where room, then equally
-      while (padToDistribute > 0) {
-        // if more space or other side is maxxed out
-        if (selectionBounds[0] > bStartX || selectionBounds[2] >= bEndX) {
-          selectionBounds[0] -= 1;
-        } else {
-          // give to other side, since still room
-          selectionBounds[2] += 1;
-        }
-        if (selectionBounds[2] < bEndX || selectionBounds[0] <= bStartX) {
-          selectionBounds[2] += 1;
-        } else {
-          selectionBounds[0] -= 1;
-        }
-
-        if (selectionBounds[1] > bStartY || selectionBounds[3] >= bEndY) {
-          selectionBounds[1] -= 1;
-        } else {
-          // give to other side, since still room
-          selectionBounds[3] += 1;
-        }
-        if (selectionBounds[3] < bEndY || selectionBounds[1] <= bStartY) {
-          selectionBounds[3] += 1;
-        } else {
-          selectionBounds[1] -= 1;
-        }
-
-        padToDistribute -= 2;
-      }
-
+      const selectionBounds = [bStartX - horPad, bStartY - vertPad, bEndX + horPad, bEndY + vertPad];
       return selectionBounds;
     });
-
-    if (sketches.debug) {
-      sketches.debug.clear();
-      selectionBoundsBySize.forEach((b, i) => {
-        if (i > 1) {
-          return;
-        }
-        sketches.debug.noFill();
-        sketches.debug.stroke(sketches.debug.color(selectionColors[i]));
-        sketches.debug.rect(b[0], b[1], b[2] - b[0], b[3] - b[1]);
-      });
-    }
 
     const selections = selectionBoundsBySize.map(selectionBounds => {
       const [ bStartX, bStartY, bEndX, bEndY ] = selectionBounds;
       return p.get(bStartX, bStartY, bEndX - bStartX, bEndY - bStartY);
-    })
+    });
     return selections;
   }
 
   function onChange(bounds, lastPos) {
     console.log('Edit with bounds ' + bounds + ' and last position at ' + lastPos);
     // get previous state of change area
-    const selections_p0 = getChangeSelections(sketches.stored, bounds, lastPos);
+    const selections_p0 = getChangeSelections2(sketches.stored, bounds);
+    const selections_mark = getChangeSelections2(sketches.temp, bounds);
 
     // write temp to stored
     const temp = sketches.temp.get();
@@ -235,11 +243,12 @@
     sketches.temp.clear();
 
     // get new state of change area
-    const selections_p1 = getChangeSelections(sketches.stored, bounds, lastPos);
+    const selections_p1 = getChangeSelections2(sketches.stored, bounds);
 
     // render to displays and retrieve dataURLs (format for API)
     const befores = selections_p0.map((s, i) => {
       const p = sketches.selections.p0[i];
+      p.resizeCanvas(s.width, s.height);
       p.background(255);
       p.image(s, 0, 0);
       const dataURL = p.canvas.toDataURL();
@@ -247,22 +256,36 @@
     });
     const afters = selections_p1.map((s, i) => {
       const p = sketches.selections.p1[i];
+      p.resizeCanvas(s.width, s.height);
       p.background(255);
       p.image(s, 0, 0);
       const dataURL = p.canvas.toDataURL();
       return dataURL;
     });
-    const img = sketches.stored.canvas.toDataURL();
+    const marks = selections_mark.map((s, i) => {
+      const p = sketches.selections.pmark[i];
+      p.resizeCanvas(s.width, s.height);
+      p.background(255);
+      p.image(s, 0, 0);
+      const dataURL = p.canvas.toDataURL();
+      return dataURL;
+    });
 
-    // find other areas of canvas that match p0
-    // send canvas and img selections to have activations evaluated
-    // find nearest neighbors (probably should do a 2D search tree)
-    // get similar sketch segments to p1
-    // keep massive hash tables of drawing sections (should serialize so we can quickly load)
-    // apply p1 matches to p0 matches
-    // align p1 to p0, draw using temporal agent
-    const scale = getAppropriateScale(bounds);
-    getSuggestions(befores, afters, img, scale);
+    // for each ai canvas, get suggestions
+
+    // const img = sketches.stored.canvas.toDataURL();
+
+    // // find other areas of canvas that match p0
+    // // send canvas and img selections to have activations evaluated
+    // // find nearest neighbors (probably should do a 2D search tree)
+    // // get similar sketch segments to p1
+    // // keep massive hash tables of drawing sections (should serialize so we can quickly load)
+    // // apply p1 matches to p0 matches
+    // // align p1 to p0, draw using temporal agent
+    // // const scale = getAppropriateScale(bounds);
+    // getSuggestions(befores, afters, img, bounds);
+
+    sketches.ai[0].line(0, 0, 100, 100);
   }
 
   function getAppropriateScale(bounds) {
@@ -279,6 +302,17 @@
     });
     const scale = min_idx;
     return scale;
+  }
+
+  function copyStoredToAI() {
+    const img = sketches.stored.get();
+    sketches.ai.forEach(p => p.image(img, 0, 0));
+  }
+
+  function selectAI(i) {
+    const img = sketches.ai[i].get();
+    sketches.stored.image(img, 0, 0);
+    sketches.ai.forEach(p => p.image(img, 0, 0));
   }
 
   function getSelectionSketch(layer_i, p_i) {
@@ -298,14 +332,42 @@
   }
   new p5(getSelectionSketch(1, 0), $('#L1_matches .selection.p0')[0]);
   new p5(getSelectionSketch(1, 1), $('#L1_matches .selection.p1')[0]);
+  new p5(getSelectionSketch(1, 'mark'), $('#L1_matches .selection.marks')[0]);
   new p5(getSelectionSketch(2, 0), $('#L2_matches .selection.p0')[0]);
   new p5(getSelectionSketch(2, 1), $('#L2_matches .selection.p1')[0]);
+  new p5(getSelectionSketch(2, 'mark'), $('#L2_matches .selection.marks')[0]);
   new p5(getSelectionSketch(3, 0), $('#L3_matches .selection.p0')[0]);
   new p5(getSelectionSketch(3, 1), $('#L3_matches .selection.p1')[0]);
+  new p5(getSelectionSketch(3, 'mark'), $('#L3_matches .selection.marks')[0]);
   new p5(getSelectionSketch(4, 0), $('#L4_matches .selection.p0')[0]);
   new p5(getSelectionSketch(4, 1), $('#L4_matches .selection.p1')[0]);
+  new p5(getSelectionSketch(4, 'mark'), $('#L4_matches .selection.marks')[0]);
   new p5(getSelectionSketch(5, 0), $('#L5_matches .selection.p0')[0]);
   new p5(getSelectionSketch(5, 1), $('#L5_matches .selection.p1')[0]);
+  new p5(getSelectionSketch(5, 'mark'), $('#L5_matches .selection.marks')[0]);
+
+  function getAISketch(i) {
+    return (p) => {
+      sketches.ai[i] = p;
+      p.setup = function setup() {
+        p.pixelDensity(1);
+        p.createCanvas(canvasSizeX, canvasSizeY);
+        p.background(255);
+        p.noLoop();
+      };
+
+      p.draw = function draw() {
+      };
+    };
+  }
+  new p5(getAISketch(0), $('#sketch_ai' + 0)[0]);
+  new p5(getAISketch(1), $('#sketch_ai' + 1)[0]);
+  new p5(getAISketch(2), $('#sketch_ai' + 2)[0]);
+  $('#sketch_ai' + 0).click(() => selectAI(0));
+  $('#sketch_ai' + 1).click(() => selectAI(1));
+  $('#sketch_ai' + 2).click(() => selectAI(2));
+
+  $('#transferStored').click(copyStoredToAI);
 
   function sketch_stored(p) {
     sketches.stored = p;
@@ -314,10 +376,12 @@
       p.pixelDensity(1);
       p.createCanvas(canvasSizeX, canvasSizeY);
       p.background(255);
+      p.noLoop();
     };
 
     p.draw = function draw() {
       p.line(0, p.height / 1.5, p.width, p.height / 1.5);
+      copyStoredToAI();
       //use esc to empty canvas
       if (p.keyIsPressed) {
         if (p.keyCode == p.ESCAPE) {
@@ -369,6 +433,8 @@
       // If mouse is not pressed, and it was being pressed at the last draw, trigger on change and clear
       if (!p.mouseIsPressed) {
         if (bounds) {
+          const pad = 10;
+          bounds = [Math.max(0, bounds[0] - pad), Math.max(0, bounds[1] - pad), Math.min(p.width - 1, bounds[2] + pad), Math.min(p.height - 1, bounds[3] + pad)];
           onChange(bounds, lastPos);
         }
         bounds = null;

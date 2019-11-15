@@ -15,7 +15,7 @@ body {
 
 canvas {
   border: 1px solid #000;
-  margin: 8px;
+  margin: 4px;
 }
 
 img {
@@ -36,4 +36,41 @@ img {
   vertical-align: top;
   margin-top: 18px;
   display: inline-block;
+}
+
+#L3_matches .arrow {
+  vertical-align: top;
+  margin-top: 38px;
+  display: inline-block;
+}
+
+#L4_matches .arrow {
+  vertical-align: top;
+  margin-top: 52px;
+  display: inline-block;
+}
+
+#L5_matches .arrow {
+  vertical-align: top;
+  margin-top: 65px;
+  display: inline-block;
+}
+
+.designMoveDescription {
+  zoom: 1;
+}
+
+.ai_sketches {
+  zoom: 0.7;
+}
+.ai_sketches canvas {
+  border: 1.5px solid #000;
+  cursor: pointer;
+}
+
+#transferStored {
+  border: 1px solid #000;
+  margin-left: 140px;
+  margin-top: 4px;
+  margin-bottom: 8px;
 }
