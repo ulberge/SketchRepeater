@@ -17,7 +17,8 @@
       p1: [],
       pmark: []
     },
-    ai: []
+    ai: [],
+    ai_overlay: []
   };
   let drawTimer = null;
 
@@ -203,25 +204,31 @@
     ]
   ];
 
-  function getChangeSelections2(p, bounds) {
+  // Given bounds, find an appropriate size that will work nicely for this layer
+  function getSelectionBoundsForLayer(bounds, i) {
     const [ bStartX, bStartY, bEndX, bEndY ] = bounds.map(bound => Math.floor(bound));
     const boundsWidth = bEndX - bStartX;
     const boundsHeight = bEndY - bStartY;
 
+    const selectionSize = selectionSizes[i];
+    const [ layerName, stride, fSize, padding ] = layers_meta[i];
+    // How many full strides at this layer do you need to add to the smallest filter to get a section of the image that
+    // will fit the change bounds
+    const stridesX = Math.max(0, Math.ceil((boundsWidth - fSize) / stride));
+    const stridesY = Math.max(0, Math.ceil((boundsHeight - fSize) / stride));
+    // Use the max, get a square
+    const sizeToSelect = Math.max(fSize + (stridesX * stride), fSize + (stridesY * stride));
+    const horPad = (sizeToSelect - boundsWidth) / 2;
+    const vertPad =(sizeToSelect - boundsHeight) / 2;
+
+    const selectionBounds = [bStartX - horPad, bStartY - vertPad, bEndX + horPad, bEndY + vertPad];
+    return selectionBounds;
+  }
+
+  function getChangeSelections2(p, bounds) {
     // get smallest bounds of activation selection area
     const selectionBoundsBySize = selectionSizes.map((selectionSize, i) => {
-      const [ layerName, stride, fSize, padding ] = layers_meta[i];
-      // How many full strides at this layer do you need to add to the smallest filter to get a section of the image that
-      // will fit the change bounds
-      const stridesX = Math.max(0, Math.ceil((boundsWidth - fSize) / stride));
-      const stridesY = Math.max(0, Math.ceil((boundsHeight - fSize) / stride));
-      // Use the max, get a square
-      const sizeToSelect = Math.max(fSize + (stridesX * stride), fSize + (stridesY * stride));
-      const horPad = (sizeToSelect - boundsWidth) / 2;
-      const vertPad =(sizeToSelect - boundsHeight) / 2;
-
-      const selectionBounds = [bStartX - horPad, bStartY - vertPad, bEndX + horPad, bEndY + vertPad];
-      return selectionBounds;
+      return getSelectionBoundsForLayer(bounds, i);
     });
 
     const selections = selectionBoundsBySize.map(selectionBounds => {
@@ -231,11 +238,71 @@
     return selections;
   }
 
+  function getActions(befores, mark, afters, imgs, bounds, n=3) {
+    console.log('fetching actions...');
+    const data = { befores, mark, afters, imgs, bounds, n };
+
+    $.get('/actions', data, function(result) {
+      console.log(result);
+      const layers = result;
+
+      const sketchesAIOverlay = sketches.ai_overlay;
+      const sketchesAI = sketches.ai.slice(1);
+      sketchesAIOverlay.forEach((p, i) => {
+        const layer = layers[i];
+        p.clear();
+        p.stroke(p.color(selectionColors[i]));
+        p.strokeWeight(2);
+        p.noFill();
+        const { locationImgs, locations, actions } = layer;
+
+        locations.forEach((location, j) => {
+          const { x, y } = location;
+          const selectionBounds = getSelectionBoundsForLayer(bounds, i);
+          const w = selectionBounds[2] - selectionBounds[0];
+          const h = selectionBounds[3] - selectionBounds[1];
+          p.rect(x, y, w, h);
+
+          const action = actions[j];
+          drawDataURLToP(sketchesAI[i], action, location);
+        });
+      });
+
+      const container = $('#mark_suggestions');
+      container.empty();
+      layers[0].marks.forEach(dataURL => {
+        const img = new Image();
+        img.src = 'data:image/png;base64,' + dataURL;
+        container.append(img);
+      });
+
+      // store others and execute on key press
+    });
+  }
+
+  function setContentsToDataURLs(container, dataUrls) {
+    container.empty();
+    dataUrls.forEach(dataURL => {
+      const img = new Image();
+      img.src = dataURL;
+      container.append(img);
+    });
+  }
+
   function onChange(bounds, lastPos) {
     console.log('Edit with bounds ' + bounds + ' and last position at ' + lastPos);
     // get previous state of change area
     const selections_p0 = getChangeSelections2(sketches.stored, bounds);
     const selections_mark = getChangeSelections2(sketches.temp, bounds);
+    const mark = sketches.temp.get(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
+
+    const markDataUrl = [sketches.comp_temp].map(p => {
+      p.resizeCanvas(mark.width, mark.height);
+      p.background(255);
+      p.image(mark, 0, 0);
+      const dataURL = p.canvas.toDataURL();
+      return dataURL;
+    })[0];
 
     // write temp to stored
     const temp = sketches.temp.get();
@@ -271,7 +338,15 @@
       return dataURL;
     });
 
-    // for each ai canvas, get suggestions
+    // draw to display imgs
+    setContentsToDataURLs($('.change_imgs .p0'), [befores[4]]);
+    setContentsToDataURLs($('.change_imgs .marks'), [marks[4]]);
+    setContentsToDataURLs($('.change_imgs .p1'), [afters[4]]);
+
+    // for each ai canvas, get suggestions at the provided layers
+    const imgs = sketches.ai.slice(1).map(p => p.canvas.toDataURL());
+
+    getActions(befores, markDataUrl, afters, imgs, bounds);
 
     // const img = sketches.stored.canvas.toDataURL();
 
@@ -356,16 +431,40 @@
         p.noLoop();
       };
 
-      p.draw = function draw() {
-      };
+      p.draw = function draw() {};
     };
   }
-  new p5(getAISketch(0), $('#sketch_ai' + 0)[0]);
-  new p5(getAISketch(1), $('#sketch_ai' + 1)[0]);
-  new p5(getAISketch(2), $('#sketch_ai' + 2)[0]);
-  $('#sketch_ai' + 0).click(() => selectAI(0));
-  $('#sketch_ai' + 1).click(() => selectAI(1));
-  $('#sketch_ai' + 2).click(() => selectAI(2));
+  new p5(getAISketch(0), $('#sketch_human')[0]);
+  new p5(getAISketch(1), $('#sketch_ai' + 0)[0]);
+  new p5(getAISketch(2), $('#sketch_ai' + 1)[0]);
+  new p5(getAISketch(3), $('#sketch_ai' + 2)[0]);
+  new p5(getAISketch(4), $('#sketch_ai' + 3)[0]);
+  new p5(getAISketch(5), $('#sketch_ai' + 4)[0]);
+
+  function getAIOverlaySketch(i) {
+    return (p) => {
+      sketches.ai_overlay[i] = p;
+      p.setup = function setup() {
+        p.pixelDensity(1);
+        p.createCanvas(canvasSizeX, canvasSizeY);
+        p.noLoop();
+      };
+
+      p.draw = function draw() {};
+    };
+  }
+
+  new p5(getAIOverlaySketch(0, true), $('#sketch_ai0_overlay')[0]);
+  new p5(getAIOverlaySketch(1, true), $('#sketch_ai1_overlay')[0]);
+  new p5(getAIOverlaySketch(2, true), $('#sketch_ai2_overlay')[0]);
+  new p5(getAIOverlaySketch(3, true), $('#sketch_ai3_overlay')[0]);
+  new p5(getAIOverlaySketch(4, true), $('#sketch_ai4_overlay')[0]);
+  $('#sketch_human').click(() => selectAI(0));
+  $('#sketch_ai0_overlay').click(() => selectAI(1));
+  $('#sketch_ai1_overlay').click(() => selectAI(2));
+  $('#sketch_ai2_overlay').click(() => selectAI(3));
+  $('#sketch_ai3_overlay').click(() => selectAI(4));
+  $('#sketch_ai4_overlay').click(() => selectAI(5));
 
   $('#transferStored').click(copyStoredToAI);
 

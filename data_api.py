@@ -84,21 +84,103 @@ def get_pieces_for_layer(img, acts, layer_meta, pct=1, thresh=None, thresh_pct=1
     return acts_pieces, img_pieces, locations
 
 
-def get_pieces_for_img(layers, layer_names, img):
+def get_pieces_for_layer2(img, acts, before, layer_meta, pct=1, thresh=None, thresh_to_keep=5):
+    '''
+    Given an image, its activations and a layer, return pieces of that image, their corresponding L2 normalized activation vectors, and their
+    locations within the image (scale is for when you are checking grids of acts)
+    '''
+    layer_name, stride, f_size, padding = layer_meta
+
+    if padding > 0:
+        img_f = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
+    k, h, w, c = acts.shape
+    # the selection to be processed at this layer might be larger than one act pixel and we need to adjust to that scale
+    scale = before.shape[0]
+
+    # how many strides to add to single act
+    extra_strides = max(0, int((scale - f_size) / stride))
+
+    acts_pieces = []
+    img_pieces = []
+    locations = []
+    below_thresh_count = 0
+    toss_count = 0
+    keep_count = 0
+    random.seed(30)
+
+    below_thresh = []
+    above_thresh = []
+
+    to_keep = []
+    for y in range(0, (h - extra_strides)):
+        for x in range(0, (w - extra_strides)):
+            # skip some percentage
+            if random.random() > pct:
+                continue
+
+            # get section of original image
+            x_start = x * stride
+            x_end = x_start + f_size + (extra_strides * stride)
+            y_start = y * stride
+            y_end = y_start + f_size + (extra_strides * stride)
+            img_piece = img[y_start: y_end, x_start: x_end]
+            location = {'x': x_start, 'y': y_start}
+
+            item = (x, y, img_piece, location)
+            # skip if threshold for empty images not met
+            if thresh is not None:
+                if np.sum(img_piece) < thresh:
+                        below_thresh.append(item)
+                        continue
+            to_keep.append(item)
+
+    if len(below_thresh) > thresh_to_keep:
+        to_keep_below_thresh = random.sample(below_thresh, thresh_to_keep)
+        to_keep.extend(to_keep_below_thresh)
+    else:
+        to_keep.extend(below_thresh)
+
+    for item in to_keep:
+        x, y, img_piece, location = item
+        # save image piece and location
+        img_pieces.append(img_piece)
+        locations.append(location)
+
+        # save acts
+        acts_y_end = y + extra_strides + 1
+        acts_x_end = x + extra_strides + 1
+        # get area of activations
+        acts_piece = acts[0, y:acts_y_end, x:acts_x_end, :]
+        # get averages for each channel
+        acts_piece = np.einsum('ijk->k', acts_piece)
+        # L2 normalization
+        feat_norm = np.sqrt(np.sum(acts_piece ** 2))
+        if feat_norm > 0:
+            acts_piece = acts_piece / feat_norm
+        acts_pieces.append(acts_piece)
+
+    print('Kept ' + str(len(to_keep)) + ' and filtered ' + str(len(below_thresh) - thresh_to_keep) + ' of ' + str(len(below_thresh)) + ' below threshold')
+
+    return acts_pieces, img_pieces, locations
+
+
+def get_pieces_for_img(layers, imgs, befores, layer_names, pcts, threshes, thresh_to_keeps):
     print('Dividing into pieces')
     start_time = time.time()
 
-    acts_by_layer = get_layers_output(layers, layer_names, img)
+    acts_by_layer = []
+    for i, img in enumerate(imgs):
+        acts = get_layers_output(layers, [layer_names[i]], img)[0]
+        acts_by_layer.append(acts)
 
     # for each layer, get the sub images and their corresponding activations
     acts_pieces_by_layer = []
     img_pieces_by_layer = []
     locations_by_layer = []
-    percents = [0.3, 0.5, 1, 1, 1]
-    thresh_percents = [0.1, 1, 1, 1, 1]
     for i, acts in enumerate(acts_by_layer):
         start_time_layer = time.time()
-        acts_pieces, img_pieces, locations = get_pieces_for_layer(img, acts, layers_meta[i], percents[i], 0.03, thresh_percents[i])
+        acts_pieces, img_pieces, locations = get_pieces_for_layer2(imgs[i], acts, befores[i], layers_meta[i], pcts[i], threshes[i], thresh_to_keeps[i])
 
         acts_pieces_by_layer.append(acts_pieces)
         img_pieces_by_layer.append(img_pieces)
@@ -107,6 +189,15 @@ def get_pieces_for_img(layers, layer_names, img):
 
     print('Divided in --- %s seconds ---' % (time.time() - start_time))
     return acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer
+
+
+# def get_pieces_for_img2(layers, img, before, layer_name, layer_index, pct, thresh, thresh_to_keep):
+#     acts = get_layers_output(layers, [layer_name], img)[0]
+#     start_time_layer = time.time()
+#     acts_pieces, img_pieces, locations = get_pieces_for_layer2(img, acts, before, layers_meta[layer_index], pct, thresh, thresh_to_keep)
+#     print('Divided L' + str(layer_index + 1) + ' in --- %s seconds ---' % (time.time() - start_time_layer))
+
+#     return acts_pieces, img_pieces, locations
 
 
 def load_corpus_imgs(sample_rate):
@@ -148,10 +239,11 @@ def load_corpus(sample_rate, pcts, thresholds, thresholdPcts):
         acts_by_layer = get_layers_output(layers, layer_names, img)
 
         for i, acts in enumerate(acts_by_layer):
-            acts_pieces, img_pieces, locations = get_pieces_for_layer(img, acts, layers_meta[i], pcts[i], thresholds[i], thresholdPcts[i])
+            if pcts[i] > 0:
+                acts_pieces, img_pieces, locations = get_pieces_for_layer(img, acts, layers_meta[i], pcts[i], thresholds[i], thresholdPcts[i])
 
-            acts_pieces_by_layer[i].extend(acts_pieces)
-            img_pieces_by_layer[i].extend(img_pieces)
+                acts_pieces_by_layer[i].extend(acts_pieces)
+                img_pieces_by_layer[i].extend(img_pieces)
 
     print('Loaded corpus in --- %s seconds ---' % (time.time() - start_time))
     for i in range(len(layer_names)):

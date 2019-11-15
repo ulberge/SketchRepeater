@@ -111,6 +111,27 @@ def overlap(r0, r1):
     return False
 
 
+def overlapsInList(match, other_matches):
+    img_piece, location = match
+    # if this piece overlaps other match, skip
+    piece_bounds = [
+        location['x'], location['y'],
+        location['x'] + img_piece.shape[1], location['y'] + img_piece.shape[0]
+    ]
+
+    for other_match in other_matches:
+        img_piece2, location2 = other_match
+        # if this piece overlaps other match, skip
+        piece_bounds2 = [
+            location2['x'], location2['y'],
+            location2['x'] + img_piece2.shape[1], location2['y'] + img_piece2.shape[0]
+        ]
+        if overlap(piece_bounds, piece_bounds2):
+            return True
+
+    return False
+
+
 class Repeater:
     def __init__(self):
         self.layers = load_layers('./data/model_without_order_info_224.mat')
@@ -126,29 +147,107 @@ class Repeater:
         # self.lshf.fit(self.acts)
         # print('Finished building LSHForest')
 
-    def get_similar_before(self, img, befores, bounds, n):
-        start_time = time.time()
-        img_f = format(img)
-        print('image to search', img_f.shape)
-        # get acts at each layer
-        # get imgs and acts for this img
-        print('Get pieces of whole img')
-        acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, ['conv1', 'conv2', 'conv3', 'conv4', 'conv5'], img_f)
-        # acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, self.layer_names, img_f)
-        print('Finished getting pieces of whole img')
+    # def get_similar_before(self, img, layer_index, before, bounds, n):
+    #     start_time = time.time()
+    #     img_f = format(img)
+    #     print('Shape of image to search', img_f.shape)
 
-        match_thresholds = []
+    #     # Get pieces of the image to search at different layers and their activations
+    #     print('Get pieces of whole img')
+    #     layer_names = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
+    #     pcts = [0.02, 0.08, 0.2, 0.2, 0.2]
+    #     threshes = [0.1, 0.1, 0.1, 0.1, 0.1]
+    #     thresh_to_keeps = [5, 5, 5, 5, 5]
+
+    #     acts_pieces, img_pieces, locations = get_pieces_for_img2(self.layers, img_f, before, layer_names[layer_index], layer_index, pcts[layer_index], threshes[layer_index], thresh_to_keeps[layer_index])
+    #     print('Finished getting pieces of whole img for L' + str(layer_index + 1))
+    #     print(len(i) for i in acts_pieces)
+
+    #     # Find the best matches
+    #     print('Getting acts in provided change area for L' + str(i + 1))
+    #     start_time_acts = time.time()
+    #     before_f = format(before)
+    #     before_act = get_layers_output(self.layers, [layer_names[i]], before_f)[0]
+    #     before_act = np.einsum('ijkc->c', before_act)
+    #     # L2 normalization
+    #     target = before_act
+    #     feat_norm = np.sqrt(np.sum(target ** 2))
+    #     if feat_norm > 0:
+    #         target = target / feat_norm
+    #     print('Found acts in --- %s seconds ---' % (time.time() - start_time_acts))
+    #     print('Shape of change area', before_act.shape)
+
+    #     start_time_f = time.time()
+    #     acts_pieces = acts_pieces_by_layer[i]
+    #     img_pieces = img_pieces_by_layer[i]
+    #     locations = locations_by_layer[i]
+    #     print('Formatting in --- %s seconds ---' % (time.time() - start_time_f))
+
+    #     print('Calcu matches for L' + str(i + 1))
+    #     start_time_error = time.time()
+    #     # find n closest matches...
+    #     error = []
+    #     for i, acts_piece in enumerate(acts_pieces):
+    #         error.append(np.sum((acts_piece - target) ** 2))
+    #     print('Calculated error in --- %s seconds ---' % (time.time() - start_time_error))
+
+    #     # get top matches that hopefully do not overlap
+    #     start_time_match = time.time()
+    #     sort_idx = np.argsort(error)
+    #     n_safe = min(n, len(sort_idx))
+    #     top_matches = []
+    #     for j in range(n_safe):
+    #         match_idx = sort_idx[j]
+    #         location = locations[match_idx]
+    #         img_piece = img_pieces[match_idx]
+    #         match = [img_piece, location]
+
+    #         if not overlapsInList(match, top_matches):
+    #             top_matches.append(match)
+
+    #     print('Found matches in --- %s seconds ---' % (time.time() - start_time_match))
+    #     print([i[1] for i in top_matches])
+
+    #     # get the imgs and their locations
+    #     matches_by_layer.append(top_matches)
+
+    #     print('Loaded matches in --- %s seconds ---' % (time.time() - start_time))
+    #     return matches_by_layer
+
+    def get_similar_befores(self, imgs, befores, n):
+        start_time = time.time()
+        print('Shape of images to search', len(imgs))
+        imgs_f = map(format, imgs)
+        print('Shape of images to search', [img.shape for img in imgs_f])
+
+        # Get pieces of the image to search at different layers and their activations
+        print('Get pieces of whole img')
+        layer_names = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
+        pcts = [0.02, 0.08, 0.2, 0.2, 0.2]
+        threshes = [0.1, 0.1, 0.1, 0.1, 0.1]
+        thresh_to_keeps = [5, 5, 5, 5, 5]
+
+        acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, imgs_f, befores, layer_names, pcts, threshes, thresh_to_keeps)
+        print('Finished getting pieces of whole img')
+        print([len(i) for i in acts_pieces_by_layer])
+        print([i[0].shape for i in acts_pieces_by_layer])
+
+        # Find the best matches for each layer
         matches_by_layer = []
-        match_locations_by_layer = []
-        time_match = 0
-        time_acts = 0
+        # For each layer
         for i, before in enumerate(befores):
-            print('Getting acts for L' + str(i + 1))
+            print('Getting acts in provided change area for L' + str(i + 1))
             start_time_acts = time.time()
             before_f = format(before)
-            before_act = get_layers_output(self.layers, [self.layer_names[i]], before_f)[0]
-            time_acts += time.time() - start_time_acts
+            before_act = get_layers_output(self.layers, [layer_names[i]], before_f)[0]
+            before_act = np.einsum('ijkc->c', before_act)
+            # L2 normalization
+            target = before_act
+            feat_norm = np.sqrt(np.sum(target ** 2))
+            if feat_norm > 0:
+                target = target / feat_norm
             print('Found acts in --- %s seconds ---' % (time.time() - start_time_acts))
+            print('Shape of change area', before_act.shape)
 
             start_time_f = time.time()
             acts_pieces = acts_pieces_by_layer[i]
@@ -156,59 +255,79 @@ class Repeater:
             locations = locations_by_layer[i]
             print('Formatting in --- %s seconds ---' % (time.time() - start_time_f))
 
-            print('Finding matches for L' + str(i + 1))
-            start_time_match = time.time()
-
-            # L2 normalization
-            target = before_act[0, 0, 0, :]
-            feat_norm = np.sqrt(np.sum(target ** 2))
-            if feat_norm > 0:
-                target = target / feat_norm
-
+            print('Calcu matches for L' + str(i + 1))
+            start_time_error = time.time()
             # find n closest matches...
             error = []
-            print('shapes', acts_pieces[0].shape, target.shape)
             for i, acts_piece in enumerate(acts_pieces):
-                # if this piece overlaps bounds, penalize heavily
-                h, w, c = img_pieces[i].shape
-                piece_bounds = [
-                    locations[i]['x'], locations[i]['y'],
-                    locations[i]['x'] + w, locations[i]['y'] + h
-                ]
-                penalty = 0
-                print(piece_bounds, bounds)
-                if overlap(piece_bounds, bounds):
-                    print(piece_bounds, bounds)
-                    penalty = 1000000
+                error.append(np.sum((acts_piece - target) ** 2))
+            print('Calculated error in --- %s seconds ---' % (time.time() - start_time_error))
 
-                error.append(np.sum((acts_piece - target) ** 2) + penalty)
+            # get top matches that hopefully do not overlap
+            start_time_match = time.time()
             sort_idx = np.argsort(error)
             n_safe = min(n, len(sort_idx))
             top_matches = []
-            top_match_locations = []
-            print('avg before error', np.mean(error))
+            print('n_safe', n_safe)
             for j in range(n_safe):
                 match_idx = sort_idx[j]
-                print('before matches error', error[match_idx])
-                top_matches.append(img_pieces[match_idx])
-                top_match_locations.append(locations[match_idx])
-            # if i == 1:
-            #     save_bar(acts_pieces[sort_idx[0]], 'match_bar' + str(i))
-            #     save_bar(target, 'target_bar' + str(i))
-            #     save_bar(error, 'error_bar' + str(i))
+                location = locations[match_idx]
+                img_piece = img_pieces[match_idx]
+                match = [img_piece, location]
 
-            time_match += time.time() - start_time_match
-            print('Matched in --- %s seconds ---' % (time.time() - start_time_match))
-            print('Finished finding matches for L' + str(i + 1))
+                if not overlapsInList(match, top_matches):
+                    top_matches.append(match)
+
+            print('Found matches in --- %s seconds ---' % (time.time() - start_time_match))
+            print([i[1] for i in top_matches])
 
             # get the imgs and their locations
             matches_by_layer.append(top_matches)
-            match_locations_by_layer.append(top_match_locations)
 
-        print('Found all acts in --- %s seconds ---' % time_acts)
-        print('Matched all layers in --- %s seconds ---' % time_match)
         print('Loaded matches in --- %s seconds ---' % (time.time() - start_time))
-        return matches_by_layer, match_locations_by_layer
+        return matches_by_layer
+
+
+    def get_similar_marks(self, mark, n):
+        '''
+        Given an image, get a number of similar images
+        '''
+        start_time = time.time()
+
+        # resize mark to fit conv2
+        orig_size = mark.shape[0]
+        mark = cv2.resize(mark, (45, 45), interpolation=cv2.INTER_AREA)
+
+        start_time_acts = time.time()
+        mark_f = format(mark)
+        mark_acts = get_layers_output(self.layers, ['conv2'], mark_f)[0]
+        print('Should only have one dimension', mark_acts.shape)
+        mark_acts = np.einsum('ijkc->c', mark_acts)
+        # L2 normalization
+        feat_norm = np.sqrt(np.sum(mark_acts ** 2))
+        if feat_norm > 0:
+            mark_acts = mark_acts / feat_norm
+        target = mark_acts
+        print('Found acts in --- %s seconds ---' % (time.time() - start_time_acts))
+
+        start_time_lookup = time.time()
+        indices, distances = self.ANN.get_nn(target, n)
+        print('Found ANN matches in --- %s seconds ---' % (time.time() - start_time_lookup))
+        top_matches = []
+        for j, idx in enumerate(indices):
+            print(idx)
+            print('error', distances[j])
+            top_match = self.imgs[1][idx]
+            top_matches.append(top_match)
+
+        print('Found matches to mark in --- %s seconds ---' % (time.time() - start_time))
+
+        # upscale matches back to match original
+        # top_matches = [cv2.resize(match, (orig_size, orig_size), interpolation=cv2.INTER_AREA) for match in top_matches]
+
+        # erode/dilate other filters to try and make it match original stroke width better...
+
+        return top_matches
 
 
     def get_similar_after(self, afters, n):

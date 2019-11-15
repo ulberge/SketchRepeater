@@ -26,126 +26,81 @@
   <body>
     <main>
       <div class="container">
-        <div class="row">
-          <div class="col-md-7">
-            <div>
-              <div id="sketch_stored"></div>
-              <div id="sketch_temp" class="overlay"></div>
-              <div id="sketch_comp" class="overlay"></div>
-              <div id="sketch_comp2" class="overlay"></div>
-              <div id="sketch_debug" class="overlay"></div>
-              <button id="transferStored">↓</button>
+        <div class="row" style="margin-top: 20px;">
+          <div class="col-md-12">
+            <div class="col-md-6 col-md-offset-3" style="text-align: center;">
+              <div class="main_canvas" style="position: relative">
+                <div id="sketch_stored"></div>
+                <div id="sketch_temp" class="overlay"></div>
+                <div id="sketch_comp" class="overlay"></div>
+                <div id="sketch_comp2" class="overlay"></div>
+                <div id="sketch_debug" class="overlay"></div>
+              </div>
             </div>
+            <div class="col-md-3">
+              <div class="change_imgs">
+                <div class="p0"></div>
+                <div class="marks"></div>
+                <div class="p1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
             <div class="ai_sketches">
-              <span id="sketch_ai0"></span>
-              <span id="sketch_ai1"></span>
-              <span id="sketch_ai2"></span>
+              <span id="sketch_human"></span>
+              <div style="display: inline-block;position: relative;">
+                <span id="sketch_ai0"></span>
+                <span id="sketch_ai0_overlay" class="overlay"></span>
+              </div>
+              <div style="display: inline-block;position: relative;">
+                <span id="sketch_ai1"></span>
+                <span id="sketch_ai1_overlay" class="overlay"></span>
+              </div>
+              <div style="display: inline-block;position: relative;">
+                <span id="sketch_ai2"></span>
+                <span id="sketch_ai2_overlay" class="overlay"></span>
+              </div>
+              <div style="display: inline-block;position: relative;">
+                <span id="sketch_ai3"></span>
+                <span id="sketch_ai3_overlay" class="overlay"></span>
+              </div>
+              <div style="display: inline-block;position: relative;">
+                <span id="sketch_ai4"></span>
+                <span id="sketch_ai4_overlay" class="overlay"></span>
+              </div>
+            </div>
+            <div id="mark_suggestions"></div>
+          </div>
+        </div>
+        <div class="hidden">
+          <div id="L1_matches">
+            <span class="selection p0"></span>
+            <span class="selection marks"></span>
+            <span class="selection p1"></span>
+          </div>
+          <div id="L2_matches">
+            <span class="selection p0"></span>
+            <span class="selection marks"></span>
+            <span class="selection p1"></span>
+          </div>
+            <div id="L3_matches">
+              <span class="selection p0"></span>
+              <span class="selection marks"></span>
+              <span class="selection p1"></span>
+            </div>
+            <div id="L4_matches">
+              <span class="selection p0"></span>
+              <span class="selection marks"></span>
+              <span class="selection p1"></span>
+            </div>
+            <div id="L5_matches">
+              <div class="selection p0"></div>
+              <div class="selection marks"></div>
+              <div class="selection p1"></div>
             </div>
           </div>
-          <div class="col-md-5">
-            <div class="designMoveDescription">
-              <div id="L1_matches">
-                <div>
-                  <span class="selection p0"></span>
-                  <span class="selection marks"></span>
-                  <span class="selection p1"></span>
-                </div>
-              </div>
-              <div id="L2_matches">
-                <div>
-                  <span class="selection p0"></span>
-                  <span class="selection marks"></span>
-                  <span class="selection p1"></span>
-                </div>
-              </div>
-                <div id="L3_matches">
-                  <div>
-                    <span class="selection p0"></span>
-                    <span class="selection marks"></span>
-                    <span class="selection p1"></span>
-                  </div>
-                </div>
-                <div id="L4_matches">
-                  <div>
-                    <span class="selection p0"></span>
-                    <span class="selection marks"></span>
-                    <span class="selection p1"></span>
-                  </div>
-                </div>
-                <div id="L5_matches">
-                  <div>
-                    <span class="selection p0"></span>
-                    <span class="selection marks"></span>
-                    <span class="selection p1"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-        <div class="row">
-          <div class="col-md-4">
-          </div>
-          <div class="col-md-8">
-            <div id="L1_matches">
-              <div>
-                <span class="selection_matches p0"></span>
-              </div>
-              <div>
-                <span class="selection_matches p1"></span>
-              </div>
-              <div style="position: relative">
-                <span class="selection_matches p2 base"></span>
-                <span class="selection_matches p2 overlay"></span>
-              </div>
-            </div>
-            <div id="L2_matches">
-              <div>
-                <span class="selection_matches p0"></span>
-              </div>
-              <div>
-                <span class="selection_matches p1"></span>
-              </div>
-              <div style="position: relative">
-                <span class="selection_matches p2 base"></span>
-                <span class="selection_matches p2 overlay"></span>
-              </div>
-            </div>
-              <div id="L3_matches">
-                <div>
-                  <span class="selection_matches p0"></span>
-                </div>
-                <div>
-                  <span class="selection_matches p1"></span>
-                </div>
-                <div style="position: relative">
-                  <span class="selection_matches p2 base"></span>
-                  <span class="selection_matches p2 overlay"></span>
-                </div>
-              </div>
-              <div id="L4_matches">
-                <div>
-                  <span class="selection_matches p0"></span>
-                </div>
-                <div>
-                  <span class="selection_matches p1"></span>
-                </div>
-                <div style="position: relative">
-                  <span class="selection_matches p2 base"></span>
-                  <span class="selection_matches p2 overlay"></span>
-                </div>
-              </div>
-              <div id="L5_matches">
-                <div>
-                  <span class="selection_matches p0"></span>
-                </div>
-                <div>
-                  <span class="selection_matches p1"></span>
-                </div>
-                <div style="position: relative">
-                  <span class="selection_matches p2 base"></span>
-                  <span class="selection_matches p2 overlay"></span>
-                </div>
-              </div>
-            </div>
         </div>
         <div id="sketch_comp_temp" style="display:none;"></div>
       </div>
