@@ -38,7 +38,7 @@ class ANN:
 
 if __name__ == '__main__':
     # sample_rate = 30
-    sample_rate = 200
+    sample_rate = 100
     # steps = [10, 1, 100, 100, 100]
     pcts = [0, 0.02, 0, 0, 0]
     thresholds = [0.03, 0.03, 0.03, 0.03, 0.03]

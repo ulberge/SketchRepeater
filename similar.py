@@ -223,9 +223,12 @@ class Repeater:
         # Get pieces of the image to search at different layers and their activations
         print('Get pieces of whole img')
         layer_names = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
-        pcts = [0.02, 0.08, 0.2, 0.2, 0.2]
+        # pcts = [0.02, 0.08, 0.2, 0.2, 0.2]
+        # threshes = [0.1, 0.1, 0.1, 0.1, 0.1]
+        # thresh_to_keeps = [5, 5, 5, 5, 5]
+        pcts = [0.1, 0.3, 0.5, 0.5, 0.5]
         threshes = [0.1, 0.1, 0.1, 0.1, 0.1]
-        thresh_to_keeps = [5, 5, 5, 5, 5]
+        thresh_to_keeps = [50, 50, 50, 50, 50]
 
         acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, imgs_f, befores, layer_names, pcts, threshes, thresh_to_keeps)
         print('Finished getting pieces of whole img')
@@ -260,7 +263,11 @@ class Repeater:
             # find n closest matches...
             error = []
             for i, acts_piece in enumerate(acts_pieces):
-                error.append(np.sum((acts_piece - target) ** 2))
+                # punish edge pieces to remove
+                if (len(img_pieces[i]) != before.shape[0] or len(img_pieces[i][0]) != before.shape[1]):
+                    error.append(9999999999)
+                else:
+                    error.append(np.sum((acts_piece - target) ** 2))
             print('Calculated error in --- %s seconds ---' % (time.time() - start_time_error))
 
             # get top matches that hopefully do not overlap
@@ -268,7 +275,6 @@ class Repeater:
             sort_idx = np.argsort(error)
             n_safe = min(n, len(sort_idx))
             top_matches = []
-            print('n_safe', n_safe)
             for j in range(n_safe):
                 match_idx = sort_idx[j]
                 location = locations[match_idx]
@@ -330,39 +336,53 @@ class Repeater:
         return top_matches
 
 
-    def get_similar_after(self, afters, n):
+    def sort_options(self, after, options, layer_index):
         '''
         Given an image, get a number of similar images
         '''
         start_time_afters = time.time()
-        top_matches_by_layer = []
-        for i, after in enumerate(afters[:2]):
-            print('Getting acts for afters for L' + str(i + 1))
-            start_time_acts = time.time()
-            after_f = format(after)
-            after_act = get_layers_output(self.layers, [self.layer_names[i]], after_f)[0]
-            print('Found acts in --- %s seconds ---' % (time.time() - start_time_acts))
 
-            after_act = after_act[0, 0, 0, :]
+        # Get activations for after
+        start_time_acts = time.time()
+        after_f = format(after)
+        after_act = get_layers_output(self.layers, [self.layer_names[layer_index]], after_f)[0]
+        after_act = np.einsum('ijkc->c', after_act)
+        # L2 normalization
+        target = after_act
+        feat_norm = np.sqrt(np.sum(target ** 2))
+        if feat_norm > 0:
+            target = target / feat_norm
+        print('Found after acts in --- %s seconds ---' % (time.time() - start_time_acts))
 
+        # Get activations for options
+        start_time_acts_options = time.time()
+        option_acts = []
+        for option in options:
+            option_f = format(option)
+            option_act = get_layers_output(self.layers, [self.layer_names[layer_index]], option_f)[0]
+            option_act = np.einsum('ijkc->c', option_act)
             # L2 normalization
-            feat_norm = np.sqrt(np.sum(after_act ** 2))
+            feat_norm = np.sqrt(np.sum(option_act ** 2))
             if feat_norm > 0:
-                after_act = after_act / feat_norm
-            target = after_act
+                option_act = option_act / feat_norm
+            option_acts.append(option_act)
+        print('Found options acts in --- %s seconds ---' % (time.time() - start_time_acts_options))
 
-            start_time_lookup = time.time()
-            indices, distances = self.ANN.get_nn(i, target, n)
-            print('Found ANN matches in --- %s seconds ---' % (time.time() - start_time_lookup))
-            top_matches = []
-            for j, idx in enumerate(indices):
-                print(idx)
-                print('error', distances[j])
-                top_match = self.imgs[i][idx]
-                top_matches.append(top_match)
-            top_matches_by_layer.append(top_matches)
+        # Calc error
+        start_time_error = time.time()
+        # find n closest matches...
+        error = []
+        for i, option_act in enumerate(option_acts):
+            error.append(np.sum((option_act - target) ** 2))
+        print('Calculated error in --- %s seconds ---' % (time.time() - start_time_error))
 
-            print('Found afters matches in --- %s seconds ---' % (time.time() - start_time_afters))
-        return top_matches_by_layer
+        # Sort and return options in order
+        sort_idx = np.argsort(error)
+        options_ordered = []
+        for i in sort_idx:
+            options_ordered.append(options[i])
+
+        print('Found afters matches in --- %s seconds ---' % (time.time() - start_time_afters))
+        return options_ordered
 
 

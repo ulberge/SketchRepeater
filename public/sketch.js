@@ -238,7 +238,26 @@
     return selections;
   }
 
-  function getActions(befores, mark, afters, imgs, bounds, n=3) {
+  const keyActions = {
+    remaining: []
+  };
+
+  $(document).keypress(e => {
+    console.log(e);
+    if (keyActions.remaining.length > 0) {
+      keyActions.remaining.forEach((layerActions, i) => {
+        if (layerActions.length > 0) {
+          const { location, dataURL, p } = layerActions[0];
+          drawDataURLToP(p, dataURL, location);
+          layerActions.splice(0, 1);
+        }
+
+        setContentsToDataURLs($('#sketch_ai' + i + '_actions'), layerActions.map(d => 'data:image/png;base64,' + d.dataURL));
+      });
+    }
+  });
+
+  function getActions(befores, mark, afters, imgs, bounds, n=1) {
     console.log('fetching actions...');
     const data = { befores, mark, afters, imgs, bounds, n };
 
@@ -248,7 +267,7 @@
 
       const sketchesAIOverlay = sketches.ai_overlay;
       const sketchesAI = sketches.ai.slice(1);
-      sketchesAIOverlay.forEach((p, i) => {
+      keyActions.remaining = sketchesAIOverlay.map((p, i) => {
         const layer = layers[i];
         p.clear();
         p.stroke(p.color(selectionColors[i]));
@@ -256,16 +275,20 @@
         p.noFill();
         const { locationImgs, locations, actions } = layer;
 
+        const actionsForLayer = [];
+        setContentsToDataURLs($('#sketch_ai' + i + '_actions'), actions.map(dataURL => 'data:image/png;base64,' + dataURL));
         locations.forEach((location, j) => {
           const { x, y } = location;
           const selectionBounds = getSelectionBoundsForLayer(bounds, i);
           const w = selectionBounds[2] - selectionBounds[0];
           const h = selectionBounds[3] - selectionBounds[1];
-          p.rect(x, y, w, h);
+          // p.rect(x, y, w, h);
+          const nextAction = { location, dataURL: actions[j], p: sketchesAI[i] };
 
-          const action = actions[j];
-          drawDataURLToP(sketchesAI[i], action, location);
+            lineTracer.trace(sketchesAI[i], sketchesAIOverlay[i], location, actions[j]);
+          // actionsForLayer.push(nextAction);
         });
+        return actionsForLayer;
       });
 
       const container = $('#mark_suggestions');
@@ -275,8 +298,6 @@
         img.src = 'data:image/png;base64,' + dataURL;
         container.append(img);
       });
-
-      // store others and execute on key press
     });
   }
 
@@ -307,7 +328,12 @@
     // write temp to stored
     const temp = sketches.temp.get();
     sketches.stored.image(temp, 0, 0);
+    sketches.ai.forEach(p => {
+      p.image(temp, 0, 0)
+    });
     sketches.temp.clear();
+
+
 
     // get new state of change area
     const selections_p1 = getChangeSelections2(sketches.stored, bounds);
@@ -359,8 +385,6 @@
     // // align p1 to p0, draw using temporal agent
     // // const scale = getAppropriateScale(bounds);
     // getSuggestions(befores, afters, img, bounds);
-
-    sketches.ai[0].line(0, 0, 100, 100);
   }
 
   function getAppropriateScale(bounds) {
@@ -465,8 +489,6 @@
   $('#sketch_ai2_overlay').click(() => selectAI(3));
   $('#sketch_ai3_overlay').click(() => selectAI(4));
   $('#sketch_ai4_overlay').click(() => selectAI(5));
-
-  $('#transferStored').click(copyStoredToAI);
 
   function sketch_stored(p) {
     sketches.stored = p;

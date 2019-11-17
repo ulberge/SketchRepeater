@@ -38,10 +38,10 @@ img {
 }
 
 .ai_sketches {
-  zoom: 0.5;
+  zoom: 0.75;
 }
 .ai_sketches canvas {
-  border: 2px solid #000;
+  border: 1.33px solid #000;
   cursor: pointer;
   margin: 4px;
 }
@@ -51,4 +51,11 @@ img {
   margin-left: 140px;
   margin-top: 4px;
   margin-bottom: 8px;
+}
+
+table.actionDebug {
+  width: 100%;
+}
+table.actionDebug td {
+  width: 16%;
 }
