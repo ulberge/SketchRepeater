@@ -28,20 +28,10 @@
       <div class="container">
         <div class="row" style="margin-top: 20px;">
           <div class="col-md-12">
-            <span id="boid_test_img"></span>
-            <span id="boid_test_boid"></span>
-            <span id="boid_test_draw"></span>
-          </div>
-        </div>
-        <div class="row" style="margin-top: 20px;">
-          <div class="col-md-12">
             <div class="col-md-6 col-md-offset-3" style="text-align: center;">
               <div class="main_canvas" style="position: relative">
                 <div id="sketch_stored"></div>
                 <div id="sketch_temp" class="overlay"></div>
-                <div id="sketch_comp" class="overlay"></div>
-                <div id="sketch_comp2" class="overlay"></div>
-                <div id="sketch_debug" class="overlay"></div>
               </div>
             </div>
             <div class="col-md-3">
@@ -56,70 +46,70 @@
         <div class="row">
           <div class="col-md-12">
             <div class="ai_sketches">
-              <span id="sketch_human"></span>
               <div style="display: inline-block;position: relative;">
                 <span id="sketch_ai0"></span>
                 <span id="sketch_ai0_overlay" class="overlay"></span>
+                <span id="sketch_ai0_debug" class="overlay"></span>
               </div>
               <div style="display: inline-block;position: relative;">
                 <span id="sketch_ai1"></span>
                 <span id="sketch_ai1_overlay" class="overlay"></span>
+                <span id="sketch_ai1_debug" class="overlay"></span>
               </div>
               <div style="display: inline-block;position: relative;">
                 <span id="sketch_ai2"></span>
                 <span id="sketch_ai2_overlay" class="overlay"></span>
+                <span id="sketch_ai2_debug" class="overlay"></span>
               </div>
               <div style="display: inline-block;position: relative;">
                 <span id="sketch_ai3"></span>
                 <span id="sketch_ai3_overlay" class="overlay"></span>
+                <span id="sketch_ai3_debug" class="overlay"></span>
               </div>
               <div style="display: inline-block;position: relative;">
                 <span id="sketch_ai4"></span>
                 <span id="sketch_ai4_overlay" class="overlay"></span>
+                <span id="sketch_ai4_debug" class="overlay"></span>
               </div>
             </div>
-            <table class="actionDebug">
-              <tr>
-                <td></td>
-                <td id="sketch_ai0_actions"></td>
-                <td id="sketch_ai1_actions"></td>
-                <td id="sketch_ai2_actions"></td>
-                <td id="sketch_ai3_actions"></td>
-                <td id="sketch_ai4_actions"></td>
-              </tr>
-            </table>
-            <div id="mark_suggestions"></div>
           </div>
         </div>
-        <div class="">
+        <div class="row hidden" style="margin-top: 20px;">
+          <div class="col-md-12">
+            <span id="boid_test_img"></span>
+            <span id="boid_test_boid"></span>
+            <span id="boid_test_draw"></span>
+          </div>
+        </div>
+        <div class="hidden">
+          <div id="mark_suggestions"></div>
           <div id="L1_matches">
             <span class="selection p0"></span>
-            <span class="selection marks"></span>
             <span class="selection p1"></span>
           </div>
           <div id="L2_matches">
             <span class="selection p0"></span>
-            <span class="selection marks"></span>
             <span class="selection p1"></span>
           </div>
             <div id="L3_matches">
               <span class="selection p0"></span>
-              <span class="selection marks"></span>
               <span class="selection p1"></span>
             </div>
             <div id="L4_matches">
               <span class="selection p0"></span>
-              <span class="selection marks"></span>
               <span class="selection p1"></span>
             </div>
             <div id="L5_matches">
               <span class="selection p0"></span>
-              <span class="selection marks"></span>
               <span class="selection p1"></span>
             </div>
           </div>
         </div>
-        <div id="sketch_comp_temp" style="display:none;"></div>
+        <div class="hidden">
+          <div id="sketch_allPurpose"></div>
+          <div id="sketch_human_marks"></div>
+          <div id="sketch_comp_marks"></div>
+        </div>
       </div>
       <script src="/public/lineTracer.js"></script>
       <script src="/public/sketch.js"></script>

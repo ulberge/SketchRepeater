@@ -27,10 +27,11 @@ canvas {
   border: 1px solid #000;
 }
 
-img {
+.change_imgs img {
   margin: 4px;
   border: 1px solid #000 !important;
-  width: 50px;
+  max-width: 50px;
+  max-height: 50px;
 }
 
 #matches img {
@@ -38,10 +39,10 @@ img {
 }
 
 .ai_sketches {
-  zoom: 0.75;
+  zoom: 0.7;
 }
 .ai_sketches canvas {
-  border: 1.33px solid #000;
+  border: 1.5px solid #000;
   cursor: pointer;
   margin: 4px;
 }

@@ -382,7 +382,7 @@
 
   // Given a canvas, an image, a canvas position
   // Have a boid trace lines from the image
-  async function trace(pMain, p, position, dataURL, numLines=3, speed=10) {
+  async function trace(p, position, dataURL, numLines=3, speed=10) {
     const remaining = await getBuffer(p, dataURL);
     remaining.loadPixels();
     const boid = new Boid(remaining);
@@ -398,9 +398,6 @@
       runsRemaining = await traceOne(p, position, boid, runsRemaining);
       tryCount += 1;
     }
-    const temp = p.get();
-    pMain.image(temp, 0, 0);
-    p.clear();
   }
 
   // setTimeout(() => {

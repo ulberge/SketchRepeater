@@ -356,24 +356,25 @@ class Repeater:
 
         # Get activations for options
         start_time_acts_options = time.time()
-        option_acts = []
+        result_acts = []
         for option in options:
-            option_f = format(option)
-            option_act = get_layers_output(self.layers, [self.layer_names[layer_index]], option_f)[0]
-            option_act = np.einsum('ijkc->c', option_act)
+            result, mark = option
+            result_f = format(result)
+            result_act = get_layers_output(self.layers, [self.layer_names[layer_index]], result_f)[0]
+            result_act = np.einsum('ijkc->c', result_act)
             # L2 normalization
-            feat_norm = np.sqrt(np.sum(option_act ** 2))
+            feat_norm = np.sqrt(np.sum(result_act ** 2))
             if feat_norm > 0:
-                option_act = option_act / feat_norm
-            option_acts.append(option_act)
+                result_act = result_act / feat_norm
+            result_acts.append(result_act)
         print('Found options acts in --- %s seconds ---' % (time.time() - start_time_acts_options))
 
         # Calc error
         start_time_error = time.time()
         # find n closest matches...
         error = []
-        for i, option_act in enumerate(option_acts):
-            error.append(np.sum((option_act - target) ** 2))
+        for i, result_act in enumerate(result_acts):
+            error.append(np.sum((result_act - target) ** 2))
         print('Calculated error in --- %s seconds ---' % (time.time() - start_time_error))
 
         # Sort and return options in order

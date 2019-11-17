@@ -331,7 +331,6 @@ def actions():
     n = int(request.args.get('n'))
 
     befores_f = map(get_img_array, befores)
-    # marks_f = map(get_img_array, marks)
     afters_f = map(get_img_array, afters)
     imgs_f = map(get_img_array, imgs)
     mark_to_match = get_img_array(mark)
@@ -430,12 +429,12 @@ def actions():
                 print(before.shape, mark.shape)
                 before += mark
                 # action = cv2.normalize(orig, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-                options.append(before)
+                options.append((before, mark))
 
             # Get best option for this before by comparing to after
             options = repeater.sort_options(after, options, i)
             best_option = options[0]
-            actions.append(best_option)
+            actions.append(best_option[1])
 
         actions_by_layer.append(actions)
 
