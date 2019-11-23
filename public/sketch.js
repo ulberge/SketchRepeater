@@ -84,7 +84,7 @@
       console.log(result);
       const layers = result;
 
-      for (let i = 0; i < 5; i += 1) {
+      for (let i = 0; i < 1; i += 1) {
         const layer = layers[i];
         const debug = sketches.ai_debug[i];
         const overlay = sketches.ai_overlay[i];
@@ -108,7 +108,7 @@
 
         // Trace out lines on overlay
         const numLines = 4;
-        const speed = 10;
+        const speed = 100;
         // Set bounds as the location where this mark was made and as the same size as the previous mark
         const boundsSize = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1]);
         lastMarkBounds[i] = [x, y, x + boundsSize, y + boundsSize];

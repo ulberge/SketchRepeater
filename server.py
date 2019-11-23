@@ -396,7 +396,7 @@ def actions():
 
                 # then we want to dilate or erode to make line weights equal
                 scaleFactor = dim_to_match / 45
-                mark = transformLineWeight2(mark, scaleFactor)
+                mark = transformLineWeight(mark, scaleFactor)
                 save_img(mark, 'after_adjust.png')
                 print(mark.shape)
                 # if dim_to_match > 45:

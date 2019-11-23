@@ -64,7 +64,7 @@
     this.position = null;
     this.acceleration = this.p.createVector(0, 0);
     this.velocity = this.p.createVector(0, 0);
-    this.r = 1.0;
+    this.r = 2.0;
     this.maxspeed = 3;    // Maximum speed
     this.maxforce = 0.05; // Maximum steering force
 
@@ -374,7 +374,7 @@
         return runsRemaining;
       }
       sketches.img.image(boid.pixelMapP, 0, 0);
-      await pause(2);
+      await pause(speed);
       runsRemaining -= 1;
     }
     return runsRemaining;
@@ -395,7 +395,7 @@
     let tryCount = 0;
     while (runsRemaining > 0 && tryCount < numLines) {
       console.log('try count: ' + (tryCount + 1), 'runs remaining', runsRemaining);
-      runsRemaining = await traceOne(p, position, boid, runsRemaining);
+      runsRemaining = await traceOne(p, position, boid, runsRemaining, speed);
       tryCount += 1;
     }
   }
