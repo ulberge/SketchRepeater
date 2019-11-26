@@ -27,21 +27,24 @@
     <main>
       <div class="container">
         <div class="row" style="margin-top: 20px;">
-          <div class="col-md-12">
-            <span id="boid_test_img"></span>
+          <div class="col-md-12 hidden">
             <div style="position: relative;display: inline-block;">
-              <span id="boid_test_boid" class="overlay"></span>
-              <span id="boid_test_draw"></span>
+              <span id="boid_test_img"></span>
+              <span id="boid_test_boid" class=""></span>
+              <span id="boid_test_draw" class=""></span>
             </div>
           </div>
           <div class="col-md-12">
-            <div class="col-md-6 col-md-offset-3" style="text-align: center;">
+            <div class="col-md-4">
+            </div>
+            <div class="col-md-4" style="text-align: center;">
               <div class="main_canvas" style="position: relative">
                 <div id="sketch_stored"></div>
                 <div id="sketch_temp" class="overlay"></div>
+                <div id="marks_record" class="overlay hidden"></div>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
               <div class="change_imgs">
                 <div class="p0"></div>
                 <div class="marks"></div>
@@ -54,34 +57,50 @@
           <div class="col-md-12">
             <div class="ai_sketches">
               <div style="display: inline-block;position: relative;">
-                <span id="sketch_ai0"></span>
-                <span id="sketch_ai0_overlay" class="overlay"></span>
-                <span id="sketch_ai0_debug" class="overlay"></span>
+                <div>
+                  <span id="sketch_ai0"></span>
+                  <span id="sketch_ai0_overlay" class="overlay"></span>
+                  <span id="sketch_ai0_debug" class="overlay"></span>
+                </div>
+                <div id="ai0_debug_mark" class="debug_mark"></div>
               </div>
               <div style="display: inline-block;position: relative;">
-                <span id="sketch_ai1"></span>
-                <span id="sketch_ai1_overlay" class="overlay"></span>
-                <span id="sketch_ai1_debug" class="overlay"></span>
+                <div>
+                  <span id="sketch_ai1"></span>
+                  <span id="sketch_ai1_overlay" class="overlay"></span>
+                  <span id="sketch_ai1_debug" class="overlay"></span>
+                </div>
+                <div id="ai1_debug_mark" class="debug_mark"></div>
               </div>
               <div style="display: inline-block;position: relative;">
-                <span id="sketch_ai2"></span>
-                <span id="sketch_ai2_overlay" class="overlay"></span>
-                <span id="sketch_ai2_debug" class="overlay"></span>
+                <div>
+                  <span id="sketch_ai2"></span>
+                  <span id="sketch_ai2_overlay" class="overlay"></span>
+                  <span id="sketch_ai2_debug" class="overlay"></span>
+                </div>
+                <div id="ai2_debug_mark" class="debug_mark"></div>
               </div>
               <div style="display: inline-block;position: relative;">
-                <span id="sketch_ai3"></span>
-                <span id="sketch_ai3_overlay" class="overlay"></span>
-                <span id="sketch_ai3_debug" class="overlay"></span>
+                <div>
+                  <span id="sketch_ai3"></span>
+                  <span id="sketch_ai3_overlay" class="overlay"></span>
+                  <span id="sketch_ai3_debug" class="overlay"></span>
+                </div>
+                <div id="ai3_debug_mark" class="debug_mark"></div>
               </div>
               <div style="display: inline-block;position: relative;">
-                <span id="sketch_ai4"></span>
-                <span id="sketch_ai4_overlay" class="overlay"></span>
-                <span id="sketch_ai4_debug" class="overlay"></span>
+                <div>
+                  <span id="sketch_ai4"></span>
+                  <span id="sketch_ai4_overlay" class="overlay"></span>
+                  <span id="sketch_ai4_debug" class="overlay"></span>
+                </div>
+                <div id="ai4_debug_mark" class="debug_mark"></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="row hidden" style="margin-top: 20px;">
+        <div class="row" style="margin-top: 20px;">
+          <div id="mark_matches"></div>
         </div>
         <div class="hidden">
           <div id="mark_suggestions"></div>

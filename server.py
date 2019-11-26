@@ -135,18 +135,18 @@ def transformLineWeight(img_orig, scaleFactor=1, max_iterations=100):
     # ret, img = cv2.threshold(img, 0.5, 1, 0)
     # ret, img = cv2.threshold(img, 90, 255, cv2.THRESH_TOZERO)
 
-    cv2.imwrite('after_adjust00_init.png', img)
+    # cv2.imwrite('after_adjust00_init.png', img)
 
     img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-    cv2.imwrite('after_adjust01_init_norm.png', img)
+    # cv2.imwrite('after_adjust01_init_norm.png', img)
 
     iterations = int(math.ceil(scaleFactor) - 1)
     if iterations > 0:
         img = cv2.erode(img, kernel, iterations=iterations)
-    cv2.imwrite('after_adjust02_init_erode.png', img)
+    # cv2.imwrite('after_adjust02_init_erode.png', img)
 
     ret, img = cv2.threshold(img, 127, 255, 0)
-    cv2.imwrite('after_adjust03_init_thresh.png', img)
+    # cv2.imwrite('after_adjust03_init_thresh.png', img)
     element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
     done = False
     iterations = 0
@@ -163,7 +163,7 @@ def transformLineWeight(img_orig, scaleFactor=1, max_iterations=100):
         # cv2.imwrite('tr' + str(iterations) + '3.png', temp)
         skel = cv2.bitwise_or(skel, temp)
         img = eroded.copy()
-        cv2.imwrite('after_adjust04' + str(iterations) + '.png', skel)
+        # cv2.imwrite('after_adjust04' + str(iterations) + '.png', skel)
 
         zeros = size - cv2.countNonZero(img)
         if zeros == size:
@@ -171,148 +171,32 @@ def transformLineWeight(img_orig, scaleFactor=1, max_iterations=100):
         iterations += 1
 
     # we have a 1px wide skeleton, but it is pixelated, we want to make look like a mark
-    save_img(skel, 'after_adjust10_skel.png')
-    # first we widen it slighlty
-    skel = cv2.dilate(skel, kernel, iterations=1)
-    save_img(skel, 'after_adjust11_dil.png')
-
-    skel = smoothLineSkeleton(skel)
-    save_img(skel, 'after_adjust1_1.png')
-    skel = smoothLineSkeleton(skel)
-    save_img(skel, 'after_adjust1_2.png')
-    skel = smoothLineSkeleton(skel)
-    save_img(skel, 'after_adjust1_3.png')
-    # skel = smoothLineSkeleton(skel)
-    # save_img(skel, 'after_adjust_4.png')
-
-    # then we erode it to make it narrow again
-    iterations = int(math.ceil(scaleFactor))
-    skel = cv2.erode(skel, kernel, iterations=iterations)
-    save_img(skel, 'after_adjust12_erode_' + str(iterations) + '.png')
-
-    # kernel_sharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-    kernel_sharpen = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-    skel = cv2.filter2D(skel, -1, kernel_sharpen)
-    save_img(skel, 'after_adjust13_sharpen.png')
-
-    skel = cv2.blur(skel, (2, 2))
-    save_img(skel, 'after_adjust14_blur.png')
-
+    # save_img(skel, 'after_adjust10_skel.png')
     # # first we widen it slighlty
-    # skel = cv2.dilate(skel, kernel, iterations=2)
-    # save_img(skel, 'after_adjust1_dil.png')
-
-    # # then we use a median blur to smooth pixelation
-    # skel = cv2.medianBlur(skel, 5)
-    # save_img(skel, 'after_adjust2_medblur.png')
-
-    # # then we erode it to make it narrow again
-    # skel = cv2.erode(skel, kernel)
-    # save_img(skel, 'after_adjust3_erode.png')
-
-    # # then we blur it to make it have smooth dissipation
-    # skel = cv2.blur(skel, (2, 2))
-    # save_img(skel, 'after_adjust4_smoothedge.png')
-
-
-    # skel = cv2.blur(skel, (3, 3))
-    # save_img(skel, 'after_adjust1_blur.png')
-    # kernel = np.ones((2, 2), np.uint8)
-    # skel = cv2.erode(skel, kernel, iterations=1)
-    # save_img(skel, 'after_adjust2_erode.png')
-    # skel = cv2.medianBlur(skel, 5)
-    # save_img(skel, 'after_adjust3_medblur.png')
-    # save_img(cv2.GaussianBlur(skel, (5, 5), 0), 'after_adjust2_test4.png')
-    # save_img(cv2.GaussianBlur(skel, (3, 3), 0), 'after_adjust2_test5.png')
-    # save_img(cv2.erode(skel, kernel, iterations=1), 'after_adjust2_test6.png')
-    # save_img(cv2.erode(skel, kernel, iterations=2), 'after_adjust2_test7.png')
-    # skel = cv2.dilate(skel, kernel, iterations=1)
-    # skel = cv2.erode(skel, kernel, iterations=1)
-    # save_img(skel, 'after_adjust2_erode2.png')
-    # skel = cv2.dilate(skel, kernel, iterations=1)
-    # skel = cv2.erode(skel, kernel, iterations=1)
-    # save_img(skel, 'after_adjust2_erode3.png')
-    # img = img_orig.copy()
-    # img = img * 255
-    # img = img.astype(np.uint8)
-
-    # ret, thresh = cv2.threshold(skel, 127, 255, 0)
-    # cv2.imwrite('after_adjust3_thresh.png', thresh)
-    # contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # # cv2.imwrite('after_tr_contimg.png', cont_img)
-    # cont_test = np.zeros(skel.shape)
-    # cont_test = cv2.drawContours(cont_test, contours, 0, (255), 1)
-    # cv2.imwrite('after_adjust4_conts.png', cont_test)
-
-    skel = skel / 255.0
-
-    return skel
-
-
-def transformLineWeight2(img_orig, scaleFactor=1, max_iterations=100):
-    kernel = np.ones((2, 2), np.uint8)
-    img = img_orig.copy()
-    img = img * 255
-    img = img.astype(np.uint8)
-
-    cv2.imwrite('after_adjust00_init.png', img)
-
-    img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-    cv2.imwrite('after_adjust01_init_norm.png', img)
-
-    # iterations = int(math.ceil(scaleFactor) + 1)
-    iterations = int(math.ceil(scaleFactor) - 1)
-    if iterations > 0:
-        img = cv2.erode(img, kernel, iterations=iterations)
-    cv2.imwrite('after_adjust02_init_erode.png', img)
-
-    skel = img
-
-    # kernel_sharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-    kernel_sharpen = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-    skel = cv2.filter2D(skel, -1, kernel_sharpen)
-    save_img(skel, 'after_adjust03_sharpen.png')
-
-    # first we widen it slighlty
     # skel = cv2.dilate(skel, kernel, iterations=1)
     # save_img(skel, 'after_adjust11_dil.png')
 
-    skel = smoothLineSkeleton(skel)
-    save_img(skel, 'after_adjust1_1.png')
-    skel = smoothLineSkeleton(skel)
-    save_img(skel, 'after_adjust1_2.png')
-    skel = smoothLineSkeleton(skel)
-    save_img(skel, 'after_adjust1_3.png')
     # skel = smoothLineSkeleton(skel)
-    # save_img(skel, 'after_adjust_4.png')
+    # # save_img(skel, 'after_adjust1_1.png')
+    # skel = smoothLineSkeleton(skel)
+    # # save_img(skel, 'after_adjust1_2.png')
+    # skel = smoothLineSkeleton(skel)
+    # # save_img(skel, 'after_adjust1_3.png')
+    # # skel = smoothLineSkeleton(skel)
+    # # save_img(skel, 'after_adjust_4.png')
 
-    # then we erode it to make it narrow again
-    if iterations > 0:
-        skel = cv2.erode(skel, kernel, iterations=iterations)
-    save_img(skel, 'after_adjust22_erode.png')
+    # # then we erode it to make it narrow again
+    # iterations = int(math.ceil(scaleFactor))
+    # skel = cv2.erode(skel, kernel, iterations=iterations)
+    # # save_img(skel, 'after_adjust12_erode_' + str(iterations) + '.png')
 
-    # kernel_sharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-    kernel_sharpen = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-    skel = cv2.filter2D(skel, -1, kernel_sharpen)
-    save_img(skel, 'after_adjust23_sharpen.png')
-
-    # remvoe blobs
-    blobs = cv2.erode(skel, kernel, iterations=3)
-    blobs = cv2.dilate(blobs, kernel, iterations=2)
-    cv2.imwrite('after_adjust24_blobs.png', blobs)
-    ret, blob_filter = cv2.threshold(blobs, 50, 255, 0)
-    cv2.imwrite('after_adjust25_blob_filter.png', blob_filter)
-    skel = cv2.subtract(skel, blob_filter)
-    cv2.imwrite('after_adjust26_noblob.png', skel)
-
-
+    # # kernel_sharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+    # kernel_sharpen = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
     # skel = cv2.filter2D(skel, -1, kernel_sharpen)
-    # save_img(skel, 'after_adjust23_sharpen2.png')
+    # # save_img(skel, 'after_adjust13_sharpen.png')
 
     # skel = cv2.blur(skel, (2, 2))
-    # save_img(skel, 'after_adjust24_blur.png')
-
-
+    # save_img(skel, 'after_adjust14_blur.png')
 
     skel = skel / 255.0
 
@@ -336,134 +220,88 @@ def actions():
     mark_to_match = get_img_array(mark)
     print('Mark to match shape', mark_to_match.shape)
 
-    print('bounds', bounds, bounds[3] - bounds[1], bounds[2] - bounds[0])
-    print('mark', mark_to_match.shape)
-    for before in befores_f:
-        print('before', before.shape)
-    for after in afters_f:
-        print('after', after.shape)
-
     # save_img(befores_f[0], 'before' + str(0) + '.png')
 
     # find pieces of images that are similar
+    start_time_before = time.time()
     befores_matches = repeater.get_similar_befores(imgs_f, befores_f, n)
+    print('Fetched before matches in --- %s seconds ---' % (time.time() - start_time_before))
 
-    for i, befores in enumerate(befores_matches):
-        for before in befores:
-            print('before match L' + str(i + 1), before[0].shape)
-
-    # Get matches for marks at L2 (with a min and max threshold to select 'marks')
-    mark_matches = repeater.get_similar_marks(mark_to_match, 9)
-
-    for mark in mark_matches:
-        print('mark match', mark.shape)
+    # Get matches for marks at L2 and L4 (with a min and max threshold to select 'marks')
+    start_time_marks = time.time()
+    mark_matches4 = repeater.get_similar_marks(mark_to_match, 4, 3)
+    mark_matches2 = repeater.get_similar_marks(mark_to_match, 2, 3)
+    mark_matches = []
+    mark_matches.extend(mark_matches2)
+    mark_matches.extend(mark_matches4)
+    print('Fetched marks in --- %s seconds ---' % (time.time() - start_time_marks))
 
     # For each layer
-    actions_by_layer = []
+    start_time_bestmarks = time.time()
+    best_option_by_layer = []
     for i, before_matches in enumerate(befores_matches):
-        before_match_imgs = [match[0] for match in before_matches]
-        after = afters_f[i]
-        actions = []
-        for before_match_img in before_match_imgs:
+        options = []
+        for before_match in before_matches:
+            before_match_img, location = before_match
             # Try some random selection of the marks on before
-            marks = random.sample(mark_matches, 5)
-            options = []
-            for mark in marks:
-                before = before_match_img.copy().squeeze()
-                print(before.shape, mark.shape, mark_to_match.shape)
+            marks = []
+            if i < 3:
+                marks = random.sample(mark_matches2, 2)
+            else:
+                marks = random.sample(mark_matches4, 2)
 
-                save_img(mark, 'before_resize.png')
+            for mark in marks:
+                testAfter = before_match_img.copy().squeeze()
+                # print(testAfter.shape, mark.shape, mark_to_match.shape)
+
+                # save_img(mark, 'adjust_before.png')
                 # we want to resize mark to match largest original mark dim
                 dim_to_match = max(mark_to_match.shape[0], mark_to_match.shape[1])
                 mark = cv2.resize(mark, (dim_to_match, dim_to_match), interpolation=cv2.INTER_AREA)
-                print(mark.shape)
-
-                # then we want to crop to mark mark match original mark
-                save_img(mark, 'before_crop.png')
-                if mark_to_match.shape[0] < dim_to_match:
-                    diff = dim_to_match - mark_to_match.shape[0]
-                    half_diff0 = diff / 2
-                    half_diff1 = diff - half_diff0
-                    mark = mark[half_diff0:-half_diff1, :]
-
-                if mark_to_match.shape[1] < dim_to_match:
-                    diff = dim_to_match - mark_to_match.shape[1]
-                    half_diff0 = diff / 2
-                    half_diff1 = diff - half_diff0
-                    mark = mark[:, half_diff0:-half_diff1]
-                print(mark.shape)
-                save_img(mark, 'before_adjust.png')
 
                 # then we want to dilate or erode to make line weights equal
-                scaleFactor = dim_to_match / 45
-                mark = transformLineWeight(mark, scaleFactor)
-                save_img(mark, 'after_adjust.png')
-                print(mark.shape)
-                # if dim_to_match > 45:
-                #     # we scaled up, so erode since marks white
-                #     kernel = np.ones((5, 5), np.uint8)
-                #     for k in range(5):
-                #         mark = cv2.erode(mark, kernel, iterations=1)
-                #         save_img(mark, 'after_adjust' + str(k) + '.png')
-                #         mark_test = cv2.blur(mark, (5, 5))
-                #         save_img(mark_test, 'after_adjust' + str(k) + '_blur.png')
+                # save_img(mark, '2before_adjust.png')
+                # scaleFactor = dim_to_match / 45  # 45 is the size of L2
+                # scaleFactor = dim_to_match / 81  # 81 is the size of L3
+                # scaleFactor = dim_to_match / 105  # 105 is the size of L4
+                # mark = transformLineWeight(mark, scaleFactor)
 
-                # if dim_to_match < 45:
-                #     # we scaled down, so dilate since marks white
-                #     kernel = np.ones((5, 5), np.uint8)
-                #     cv2.dilate(mark, kernel, iterations=1)
+                if i < 3:
+                    # mark = cv2.normalize(mark, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+                    kernel = np.ones((2, 2), np.uint8)
+                    mark = cv2.erode(mark, kernel, iterations=1)
+                    ret, mark = cv2.threshold(mark, 0.4, 1, 0)
+                    # save_img(mark, 'adjust_after.png')
 
                 # Pad outside of mark
-                print(before.shape, mark.shape)
-                h_pad = before.shape[1] - mark.shape[1]
+                h_pad = before_match_img.shape[1] - mark.shape[1]
                 h_pad_left = int(h_pad / 2)
                 h_pad_right = h_pad - h_pad_left
-
-                v_pad = before.shape[0] - mark.shape[0]
+                v_pad = before_match_img.shape[0] - mark.shape[0]
                 v_pad_top = int(v_pad / 2)
                 v_pad_bottom = v_pad - v_pad_top
-
-                print(mark.shape, v_pad_top, v_pad_bottom, h_pad_left, h_pad_right)
                 mark = cv2.copyMakeBorder(mark, v_pad_top, v_pad_bottom, h_pad_left, h_pad_right, cv2.BORDER_CONSTANT, value=[0., 0., 0.])
 
-                print(before.shape, mark.shape)
-                before += mark
-                # action = cv2.normalize(orig, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-                options.append((before, mark))
+                # Add mark to before
+                testAfter += mark
+                options.append((testAfter, mark, before_match_img, location))
 
-            # Get best option for this before by comparing to after
-            options = repeater.sort_options(after, options, i)
-            best_option = options[0]
-            actions.append(best_option[1])
-
-        actions_by_layer.append(actions)
-
-
-    # for i, before in enumerate(befores_matches[0]):
-    #     save_img(before, 'before_matches' + str(i) + '.png')
-
-    # afters_matches = repeater.get_similar_after(afters_f, n)
-
-    # align images
-    # afters_matches_aligned = []
-    # for i, before_matches in enumerate(befores_matches):
-    #     after_matches = afters_matches[i]
-    #     after_matches_aligned = []
-    #     for j, before in enumerate(before_matches):
-    #         after = after_matches[j]
-    #         after_aligned = align_images_safe(before, after)
-    #         after_matches_aligned.append(after_aligned)
-    #     afters_matches_aligned.append(after_matches_aligned)
+        # Get best option for this before by comparing to after
+        options = repeater.sort_options(afters_f[i], options, i)
+        best_option = options[0]
+        best_option_by_layer.append(best_option)
+    print('Fetched best marks in --- %s seconds ---' % (time.time() - start_time_bestmarks))
 
     # encode the images
     result = {}
     for i in range(len(befores_matches)):
+        best_option = best_option_by_layer[i]
         result[i] = {
-            'locations': [match[1] for match in befores_matches[i]],
-            'locationImgs': map(get_data_url, [match[0] for match in befores_matches[i]]),
-            'marks': map(get_data_url, mark_matches),
-            'actions': map(get_data_url, actions_by_layer[i])
-            # 'suggestionsAligned': map(get_data_url, afters_matches_aligned[i])
+            'location': best_option[3],
+            'before': get_data_url(best_option[2]),
+            'mark': get_data_url(best_option[1]),
+            'after': get_data_url(best_option[0]),
+            'marks': map(get_data_url, mark_matches)
         }
 
 

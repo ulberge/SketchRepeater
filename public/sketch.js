@@ -4,20 +4,22 @@
 
   const selectionSizes = [15, 45, 81, 105, 129];
   // const selectionColors = ['#A74661', '#956C89', '#8490B0', '#71B6D7', '#67CBEF'];
-  const selectionColors = ['#A74661', '#956C89', '#8490B0', '#71B6D7', '#67CBEF'];
+  // const selectionColors = ['#A74661', '#956C89', '#8490B0', '#71B6D7', '#67CBEF'];
+  const selectionColors = ['#67CBEF', '#67CBEF', '#67CBEF', '#67CBEF', '#67CBEF'];
   const sketches = {
     stored: null,
     temp: null,
     compMarks: null,
     humanMarks: null,
     allPurpose: null,
+    marksRecord: null,
     selections: {
       p0: [],
       p1: []
     },
     ai: [],
     ai_overlay: [],
-    ai_debug: []
+    ai_debug: [],
   };
   let drawTimer = null;
 
@@ -37,6 +39,9 @@
     container.empty();
     dataUrls.forEach(dataURL => {
       const img = new Image();
+      if (!dataURL.includes('data:image/png;base64,')) {
+        dataURL = 'data:image/png;base64,' + dataURL;
+      }
       img.src = dataURL;
       container.append(img);
     });
@@ -84,7 +89,9 @@
       console.log(result);
       const layers = result;
 
-      for (let i = 0; i < 1; i += 1) {
+      setContentsToDataURLs($('#mark_matches'), layers[0].marks);
+
+      for (let i = 0; i < 5; i += 1) {
         const layer = layers[i];
         const debug = sketches.ai_debug[i];
         const overlay = sketches.ai_overlay[i];
@@ -92,9 +99,7 @@
         overlay.clear();
         debug.clear();
 
-        const { locationImgs, locations, actions } = layer;
-        const location = locations[0];
-        const action = actions[0];
+        const { location, before, mark, after } = layer;
 
         // Draw rectangle highlighting area selected for change
         const { x, y } = location;
@@ -105,14 +110,16 @@
         debug.strokeWeight(2);
         debug.noFill();
         debug.rect(x, y, w, h);
+        console.log('rect', i, w, h);
 
         // Trace out lines on overlay
         const numLines = 4;
-        const speed = 100;
-        // Set bounds as the location where this mark was made and as the same size as the previous mark
-        const boundsSize = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1]);
-        lastMarkBounds[i] = [x, y, x + boundsSize, y + boundsSize];
-        lineTracer.trace(overlay, location, action, numLines, speed);
+        const speed = 0.00001;
+        lineTracer.trace(overlay, location, mark, numLines, speed, 12);
+
+        // Draw debug stuff
+        setContentsToDataURLs($('#ai' + i + '_debug_mark'), [before, mark, after]);
+        lastMarkBounds[i] = [x, y, x + w, y + h];
       }
       console.log(JSON.stringify(lastMarkBounds));
 
@@ -126,7 +133,7 @@
     });
   }
 
-  function onChange(bounds) {
+  function onChange(bounds, isAI=false) {
     console.log('Edit with bounds ' + bounds);
     // get previous state of change area
     const selections_p0 = getChangeSelections(sketches.stored, bounds);
@@ -134,15 +141,41 @@
     const mark = sketches.temp.get(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
 
     const markDataUrl = [sketches.allPurpose].map(p => {
-      p.resizeCanvas(mark.width, mark.height);
+      const markSize = Math.max(mark.width, mark.height);
+      p.resizeCanvas(markSize, markSize);
+      console.log('mark size', mark.width, mark.height);
       p.background(255);
-      p.image(mark, 0, 0);
+      p.image(mark, (markSize - mark.width) / 2, (markSize - mark.height) / 2);
       const dataURL = p.canvas.toDataURL();
       return dataURL;
     })[0];
 
-    // write temp to stored
     const temp = sketches.temp.get();
+
+    // write temp to record
+    // tint first to indicate source
+    sketches.allPurpose.clear();
+    sketches.allPurpose.resizeCanvas(sketches.temp.width, sketches.temp.height);
+    sketches.allPurpose.image(temp, 0, 0);
+    sketches.allPurpose.loadPixels();
+    if (isAI) {
+      sketches.allPurpose.pixels.forEach((v, i) => {
+        if ((i % 4) === 1 || (i % 4) === 2) {
+          sketches.allPurpose.pixels[i] = 255;
+        }
+      });
+    } else {
+      sketches.allPurpose.pixels.forEach((v, i) => {
+        if ((i % 4) === 1 || (i % 4) === 0) {
+          sketches.allPurpose.pixels[i] = 255;
+        }
+      });
+    }
+    sketches.allPurpose.updatePixels();
+    const tinted = sketches.allPurpose.get();
+    sketches.marksRecord.image(tinted, 0, 0);
+
+    // write temp to stored
     sketches.stored.image(temp, 0, 0);
     sketches.ai.forEach(p => {
       p.image(temp, 0, 0)
@@ -190,9 +223,24 @@
     // Get the mark(s) for this AI
     const mark = sketches.ai_overlay[i].get();
 
+    // Make reddish mark black
+    sketches.allPurpose.clear();
+    sketches.allPurpose.resizeCanvas(sketches.temp.width, sketches.temp.height);
+    sketches.allPurpose.image(mark, 0, 0);
+    sketches.allPurpose.loadPixels();
+    sketches.allPurpose.pixels.forEach((v, i) => {
+      if ((i % 4) === 0 && sketches.allPurpose.pixels[i] !== 0) {
+        sketches.allPurpose.pixels[i] = 0;
+        sketches.allPurpose.pixels[i + 1] = 0;
+        sketches.allPurpose.pixels[i + 2] = 0;
+      }
+    });
+    sketches.allPurpose.updatePixels();
+    const markBlack = sketches.allPurpose.get();
+
     // Copy to temp and trigger change
-    sketches.temp.image(mark, 0, 0);
-    onChange(lastMarkBounds[i]);
+    sketches.temp.image(markBlack, 0, 0);
+    onChange(lastMarkBounds[i], true);
   }
 
   function getSketch() {
@@ -238,6 +286,8 @@
   sketches.humanMarks = new p5(getSketch(), document.getElementById('sketch_human_marks'));
   sketches.allPurpose = new p5(getSketch(), document.getElementById('sketch_allPurpose'));
 
+  sketches.marksRecord = new p5(getSketch(), document.getElementById('marks_record'));
+
   function sketch_stored(p) {
     sketches.stored = p;
 
@@ -249,7 +299,7 @@
     };
 
     p.draw = function draw() {
-      p.line(0, p.height / 1.5, p.width, p.height / 1.5);
+      // p.line(0, p.height / 1.5, p.width, p.height / 1.5);
       copyStoredToAI();
     };
   }
@@ -294,7 +344,8 @@
       // If mouse is not pressed, and it was being pressed at the last draw, trigger on change and clear
       if (!p.mouseIsPressed) {
         if (bounds) {
-          const pad = 10;
+          const pad = 15;
+          // const pad = 0;
           bounds = [Math.max(0, bounds[0] - pad), Math.max(0, bounds[1] - pad), Math.min(p.width - 1, bounds[2] + pad), Math.min(p.height - 1, bounds[3] + pad)];
           onChange(bounds);
         }
@@ -303,4 +354,29 @@
     };
   }
   new p5(sketch_temp, document.getElementById('sketch_temp'));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'a') {
+      if ($('#marks_record').hasClass('hidden')) {
+        $('#marks_record').removeClass('hidden');
+      } else {
+        $('#marks_record').addClass('hidden');
+      }
+    }
+
+    if (e.key === 'q') {
+      if ($('.change_imgs').hasClass('hidden')) {
+        $('.change_imgs').removeClass('hidden');
+        $('.debug_mark').removeClass('hidden');
+        $('#mark_matches').removeClass('hidden');
+      } else {
+        $('.change_imgs').addClass('hidden');
+        $('.debug_mark').addClass('hidden');
+        $('#mark_matches').addClass('hidden');
+      }
+    }
+  });
+  $('.change_imgs').addClass('hidden');
+  $('.debug_mark').addClass('hidden');
+  $('#mark_matches').addClass('hidden');
 }());
