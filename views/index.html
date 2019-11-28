@@ -24,8 +24,8 @@
 
   </head>
   <body>
-    <main>
-      <div class="container">
+    <main id="view">
+      <div class="">
         <div class="row" style="margin-top: 20px;">
           <div class="col-md-12 hidden">
             <div style="position: relative;display: inline-block;">
@@ -35,13 +35,13 @@
             </div>
           </div>
           <div class="col-md-12">
-            <div class="col-md-4">
+            <div class="col-md-4" style="text-align: right;">
+                <div id="marks_record" class=""></div>
             </div>
             <div class="col-md-4" style="text-align: center;">
               <div class="main_canvas" style="position: relative">
                 <div id="sketch_stored"></div>
                 <div id="sketch_temp" class="overlay"></div>
-                <div id="marks_record" class="overlay hidden"></div>
               </div>
             </div>
             <div class="col-md-4">
@@ -63,6 +63,8 @@
                   <span id="sketch_ai0_debug" class="overlay"></span>
                 </div>
                 <div id="ai0_debug_mark" class="debug_mark"></div>
+                <div id="ai0_debug_before" class="debug_mark"></div>
+                <div id="ai0_debug_before2" class="debug_mark"></div>
               </div>
               <div style="display: inline-block;position: relative;">
                 <div>
@@ -71,6 +73,8 @@
                   <span id="sketch_ai1_debug" class="overlay"></span>
                 </div>
                 <div id="ai1_debug_mark" class="debug_mark"></div>
+                <div id="ai1_debug_before" class="debug_mark"></div>
+                <div id="ai1_debug_before2" class="debug_mark"></div>
               </div>
               <div style="display: inline-block;position: relative;">
                 <div>
@@ -79,6 +83,8 @@
                   <span id="sketch_ai2_debug" class="overlay"></span>
                 </div>
                 <div id="ai2_debug_mark" class="debug_mark"></div>
+                <div id="ai2_debug_before" class="debug_mark"></div>
+                <div id="ai2_debug_before2" class="debug_mark"></div>
               </div>
               <div style="display: inline-block;position: relative;">
                 <div>
@@ -87,19 +93,23 @@
                   <span id="sketch_ai3_debug" class="overlay"></span>
                 </div>
                 <div id="ai3_debug_mark" class="debug_mark"></div>
+                <div id="ai3_debug_before" class="debug_mark"></div>
+                <div id="ai3_debug_before2" class="debug_mark"></div>
               </div>
-              <div style="display: inline-block;position: relative;">
+              <div style="display: none;position: relative;">
                 <div>
                   <span id="sketch_ai4"></span>
                   <span id="sketch_ai4_overlay" class="overlay"></span>
                   <span id="sketch_ai4_debug" class="overlay"></span>
                 </div>
                 <div id="ai4_debug_mark" class="debug_mark"></div>
+                <div id="ai4_debug_before" class="debug_mark"></div>
+                <div id="ai4_debug_before2" class="debug_mark"></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="row" style="margin-top: 20px;">
+        <div class="row hidden" style="margin-top: 20px;">
           <div id="mark_matches"></div>
         </div>
         <div class="hidden">
@@ -134,6 +144,8 @@
       </div>
       <script src="/public/lineTracer.js"></script>
       <script src="/public/sketch.js"></script>
+      <script src="/public/html2canvas.js"></script>
     </main>
+    <div id="screenshot" class="hidden"></div>
   </body>
 </html>

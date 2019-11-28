@@ -162,7 +162,7 @@ class Repeater:
         # thresh_to_keeps = [50, 50, 50, 50, 50]
         pcts = [0.05, 0.4, 0.5, 1, 1]
         threshes = [0.1, 0.1, 0.1, 0.1, 0.1]
-        thresh_to_keeps = [20, 50, 20, 50, 50]
+        thresh_to_keeps = [20, 50, 50, 50, 50]
 
         acts_pieces_by_layer, img_pieces_by_layer, locations_by_layer = get_pieces_for_img(self.layers, imgs_f, befores, layer_names, pcts, threshes, thresh_to_keeps)
         # print('Finished getting pieces of whole img')
@@ -197,11 +197,7 @@ class Repeater:
             # find n closest matches...
             error = []
             for i, acts_piece in enumerate(acts_pieces):
-                # punish edge pieces to remove
-                if (len(img_pieces[i]) != before.shape[0] or len(img_pieces[i][0]) != before.shape[1]):
-                    error.append(9999999999)
-                else:
-                    error.append(np.sum((acts_piece - target) ** 2))
+                error.append(np.sum((acts_piece - target) ** 2))
             # print('Calculated error in --- %s seconds ---' % (time.time() - start_time_error))
 
             # get top matches that hopefully do not overlap

@@ -78,7 +78,7 @@ def get_pieces_for_layer(img, acts, layer_meta, pct=1, thresh=None, thresh_pct=1
     layer_name, stride, f_size, padding = layer_meta
 
     if padding > 0:
-        img_f = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        img = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
     k, h, w, c = acts.shape
     acts_pieces = []
@@ -148,14 +148,16 @@ def get_pieces_for_layer2(img, acts, before, layer_meta, pct=1, thresh=None, thr
     layer_name, stride, f_size, padding = layer_meta
 
     if padding > 0:
-        img_f = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        img = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
     k, h, w, c = acts.shape
+    print(k, h, w, c, img.shape, padding)
     # the selection to be processed at this layer might be larger than one act pixel and we need to adjust to that scale
     scale = before.shape[0]
 
     # how many strides to add to single act
     extra_strides = max(0, int((scale - f_size) / stride))
+    print(layer_meta[0], extra_strides)
 
     acts_pieces = []
     img_pieces = []
@@ -181,7 +183,7 @@ def get_pieces_for_layer2(img, acts, before, layer_meta, pct=1, thresh=None, thr
             y_start = y * stride
             y_end = y_start + f_size + (extra_strides * stride)
             img_piece = img[y_start: y_end, x_start: x_end]
-            location = {'x': x_start, 'y': y_start}
+            location = {'x': x_start - padding, 'y': y_start - padding}
 
             item = (x, y, img_piece, location)
             # skip if threshold for empty images not met

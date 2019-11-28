@@ -50,57 +50,6 @@ def get_data_url(img_arr):
     return img_data_url
 
 
-@app.route('/suggestions', methods=['GET'])
-def suggestions():
-    start_time = time.time()
-    befores = request.args.getlist('befores[]')
-    afters = request.args.getlist('afters[]')
-    img = request.args.get('img')
-    bounds = request.args.getlist('bounds[]')
-    bounds = [float(i) for i in bounds]
-    n = int(request.args.get('n'))
-
-    befores_f = map(get_img_array, befores)
-    afters_f = map(get_img_array, afters)
-    img_f = get_img_array(img)
-
-    # save_img(befores_f[0], 'before' + str(0) + '.png')
-
-    # find pieces of images that are similar
-    befores_matches = repeater.get_similar_before(img_f, befores_f, bounds, n)
-
-    # for i, before in enumerate(befores_matches[0]):
-    #     save_img(before, 'before_matches' + str(i) + '.png')
-
-    # afters_matches = repeater.get_similar_after(afters_f, n)
-
-    # align images
-    # afters_matches_aligned = []
-    # for i, before_matches in enumerate(befores_matches):
-    #     after_matches = afters_matches[i]
-    #     after_matches_aligned = []
-    #     for j, before in enumerate(before_matches):
-    #         after = after_matches[j]
-    #         after_aligned = align_images_safe(before, after)
-    #         after_matches_aligned.append(after_aligned)
-    #     afters_matches_aligned.append(after_matches_aligned)
-
-    # encode the images
-    result = {}
-    for i in range(len(befores_matches)):
-        result[i] = {
-            'locations': [match[1] for match in before_matches[i]],
-            'locationImgs': map(get_data_url, [match[0] for match in before_matches[i]]),
-            # 'suggestions': map(get_data_url, afters_matches[i]),
-            # 'suggestionsAligned': map(get_data_url, afters_matches_aligned[i])
-        }
-
-
-    print('Served suggestions in --- %s seconds ---' % (time.time() - start_time))
-
-    return jsonify(result)
-
-
 def smoothLineSkeleton(img):
     kernel = np.ones((2, 2), np.uint8)
     # kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (2, 2))
@@ -203,6 +152,14 @@ def transformLineWeight(img_orig, scaleFactor=1, max_iterations=100):
     return skel
 
 
+def format(img):
+    img = img / 255.0
+    img = 1 - img
+    h, w = img.shape
+    img = np.asarray(img).astype(np.float32).reshape((h, w, 1))
+    return img
+
+
 @app.route('/actions', methods=['GET'])
 def actions():
     start_time = time.time()
@@ -210,13 +167,15 @@ def actions():
     mark = request.args.get('mark')
     afters = request.args.getlist('afters[]')
     imgs = request.args.getlist('imgs[]')
-    bounds = request.args.getlist('bounds[]')
-    bounds = [float(i) for i in bounds]
+    # bounds = request.args.getlist('bounds[]')
+    # bounds = [float(i) for i in bounds]
+    # markBounds = request.args.getlist('markBounds[]')
+    # markBounds = [float(i) for i in markBounds]
     n = int(request.args.get('n'))
 
-    befores_f = map(get_img_array, befores)
-    afters_f = map(get_img_array, afters)
-    imgs_f = map(get_img_array, imgs)
+    befores_f = map(get_img_array, befores[:3])
+    afters_f = map(get_img_array, afters[:4])
+    imgs_f = map(get_img_array, imgs[:3])
     mark_to_match = get_img_array(mark)
     print('Mark to match shape', mark_to_match.shape)
 
@@ -224,7 +183,29 @@ def actions():
 
     # find pieces of images that are similar
     start_time_before = time.time()
-    befores_matches = repeater.get_similar_befores(imgs_f, befores_f, n)
+    befores_matches = repeater.get_similar_befores(imgs_f, befores_f, n * 4)
+
+    before_matches_L4 = []
+    img_L3 = format(imgs_f[2])
+    extra_matches = []
+    if len(befores_matches[2]) > 2:
+        extra_matches = befores_matches[2][2:]
+        befores_matches[2] = befores_matches[2][:2]
+        print('extra!')
+    else:
+        extra_matches = befores_matches[2]
+
+    for before_match in extra_matches:
+        before_match_img, location = before_match
+        x, y = location['x'] - 12, location['y'] - 12
+        end_x, end_y = x + 105, y + 105
+        location = {'x': x, 'y': y}
+        before_match_img = img_L3[x:end_x, y:end_y]
+        h, w, c = before_match_img.shape
+        before_match_img = cv2.copyMakeBorder(before_match_img, 0, (105 - h), 0, (105 - w), cv2.BORDER_CONSTANT, value=[0., 0., 0.])
+        before_matches_L4.append((before_match_img, location))
+    befores_matches.append(before_matches_L4)
+
     print('Fetched before matches in --- %s seconds ---' % (time.time() - start_time_before))
 
     # Get matches for marks at L2 and L4 (with a min and max threshold to select 'marks')
@@ -245,7 +226,7 @@ def actions():
             before_match_img, location = before_match
             # Try some random selection of the marks on before
             marks = []
-            if i < 3:
+            if i < 2:
                 marks = random.sample(mark_matches2, 2)
             else:
                 marks = random.sample(mark_matches4, 2)
@@ -266,7 +247,7 @@ def actions():
                 # scaleFactor = dim_to_match / 105  # 105 is the size of L4
                 # mark = transformLineWeight(mark, scaleFactor)
 
-                if i < 3:
+                if i < 2:
                     # mark = cv2.normalize(mark, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
                     kernel = np.ones((2, 2), np.uint8)
                     mark = cv2.erode(mark, kernel, iterations=1)
@@ -280,7 +261,11 @@ def actions():
                 v_pad = before_match_img.shape[0] - mark.shape[0]
                 v_pad_top = int(v_pad / 2)
                 v_pad_bottom = v_pad - v_pad_top
-                mark = cv2.copyMakeBorder(mark, v_pad_top, v_pad_bottom, h_pad_left, h_pad_right, cv2.BORDER_CONSTANT, value=[0., 0., 0.])
+                print(before_match_img.shape, mark.shape, v_pad_top, v_pad_bottom, h_pad_left, h_pad_right)
+                if h_pad >= 0 or v_pad >= 0:
+                    mark = cv2.copyMakeBorder(mark, v_pad_top, v_pad_bottom, h_pad_left, h_pad_right, cv2.BORDER_CONSTANT, value=[0., 0., 0.])
+                else:
+                    mark = cv2.resize(mark, before_match_img.shape[:2], interpolation=cv2.INTER_AREA)
 
                 # Add mark to before
                 testAfter += mark
@@ -296,12 +281,14 @@ def actions():
     result = {}
     for i in range(len(befores_matches)):
         best_option = best_option_by_layer[i]
+        befores = [before_match[0] for before_match in befores_matches[i]]
         result[i] = {
             'location': best_option[3],
             'before': get_data_url(best_option[2]),
             'mark': get_data_url(best_option[1]),
             'after': get_data_url(best_option[0]),
-            'marks': map(get_data_url, mark_matches)
+            'marks': map(get_data_url, mark_matches),
+            'befores': map(get_data_url, befores)
         }
 
 

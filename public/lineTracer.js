@@ -493,7 +493,6 @@
         g.image(img, 0, 0);
         g.noStroke();
         g.fill(255);
-        console.log(g.width);
         g.rect(0, 0, g.width, padding);
         g.rect(0, g.height - padding, g.width, g.height);
         g.rect(0, 0, padding, g.height);
@@ -553,7 +552,7 @@
     sketches.boid.resizeCanvas(remaining.width, remaining.height);
     sketches.draw.resizeCanvas(remaining.width, remaining.height);
 
-    let runsRemaining = 400;
+    let runsRemaining = 100;
     let tryCount = 0;
     while (runsRemaining > 0 && tryCount < numLines) {
       // console.log('try count: ' + (tryCount + 1), 'runs remaining', runsRemaining);

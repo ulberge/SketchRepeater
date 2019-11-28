@@ -16,6 +16,10 @@ body {
   margin-left: -150px;
 }
 
+#marks_record canvas {
+  background: #fff;
+}
+
 .ai_sketches .overlay {
   left: 0;
 }
@@ -32,8 +36,8 @@ canvas {
 .change_imgs img {
   margin: 4px;
   border: 1px solid #000 !important;
-  max-width: 90px;
-  max-height: 90px;
+  max-width: 70px;
+  max-height: 70px;
 }
 
 #matches img {
@@ -41,10 +45,10 @@ canvas {
 }
 
 .ai_sketches {
-  zoom: 0.4;
+  /*zoom: 0.4;*/
 }
 .ai_sketches canvas {
-  border: 2.5px solid #000;
+  /*border: 2.5px solid #000;*/
   cursor: pointer;
   margin: 4px;
 }
@@ -73,4 +77,8 @@ table.actionDebug td {
 #mark_matches img {
   margin: 10px;
   border: 1px solid #000;
+}
+
+#view {
+  margin-bottom: 100px;
 }

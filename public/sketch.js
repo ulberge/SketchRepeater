@@ -32,6 +32,7 @@
   ];
 
   // Store the bounds of the most recent mark for each AI
+  const lastBounds = [[], [], [], [], []];
   const lastMarkBounds = [[], [], [], [], []];
 
   // Given a container and some dataURLs, clear the container and add the dataURLs as images to that container
@@ -57,8 +58,8 @@
     const [ layerName, stride, fSize, padding ] = layers_meta[i];
     // How many full strides at this layer do you need to add to the smallest filter to get a section of the image that
     // will fit the change bounds
-    const stridesX = Math.max(0, Math.ceil((boundsWidth - fSize) / stride));
-    const stridesY = Math.max(0, Math.ceil((boundsHeight - fSize) / stride));
+    const stridesX = Math.max(0, Math.floor((boundsWidth - fSize) / stride)) + Math.floor(i / 2);
+    const stridesY = Math.max(0, Math.floor((boundsHeight - fSize) / stride)) + Math.floor(i / 2);
     // Use the max, get a square
     const sizeToSelect = Math.max(fSize + (stridesX * stride), fSize + (stridesY * stride));
     const horPad = (sizeToSelect - boundsWidth) / 2;
@@ -81,17 +82,36 @@
     return selections;
   }
 
+  let toDraw = 0;
+  async function draw(p, position, dataURL, numLines=3, speed=10, padding=0) {
+    toDraw += 1;
+    await lineTracer.trace(p, position, dataURL, numLines, speed, padding);
+    toDraw -= 1;
+
+    if (toDraw === 0) {
+      $('.change_imgs').removeClass('hidden');
+      $('.debug_mark').removeClass('hidden');
+      $('#marks_record').removeClass('hidden');
+      html2canvas(document.querySelector('#view')).then(canvas => {
+        $('#screenshot').append(canvas);
+      });
+      $('.change_imgs').addClass('hidden');
+      $('.debug_mark').addClass('hidden');
+      $('#marks_record').addClass('hidden');
+    }
+  }
+
   function getActions(befores, mark, afters, imgs, bounds, n=1) {
     console.log('fetching actions...');
     const data = { befores, mark, afters, imgs, bounds, n };
+    const befores_prev = befores;
 
     $.get('/actions', data, function(result) {
-      console.log(result);
       const layers = result;
 
       setContentsToDataURLs($('#mark_matches'), layers[0].marks);
 
-      for (let i = 0; i < 5; i += 1) {
+      for (let i = 0; i < 4; i += 1) {
         const layer = layers[i];
         const debug = sketches.ai_debug[i];
         const overlay = sketches.ai_overlay[i];
@@ -99,7 +119,7 @@
         overlay.clear();
         debug.clear();
 
-        const { location, before, mark, after } = layer;
+        const { location, before, mark, after, befores } = layer;
 
         // Draw rectangle highlighting area selected for change
         const { x, y } = location;
@@ -110,19 +130,19 @@
         debug.strokeWeight(2);
         debug.noFill();
         debug.rect(x, y, w, h);
-        console.log('rect', i, w, h);
 
         // Trace out lines on overlay
         const numLines = 4;
         const speed = 0.00001;
-        lineTracer.trace(overlay, location, mark, numLines, speed, 12);
+        draw(overlay, location, mark, numLines, speed, 12);
 
         // Draw debug stuff
         setContentsToDataURLs($('#ai' + i + '_debug_mark'), [before, mark, after]);
+        // setContentsToDataURLs($('#ai' + i + '_debug_before'), befores);
+        // setContentsToDataURLs($('#ai' + i + '_debug_before2'), [befores_prev[i]]);
+        lastBounds[i] = [x, y, x + w, y + h];
         lastMarkBounds[i] = [x, y, x + w, y + h];
       }
-      console.log(JSON.stringify(lastMarkBounds));
-
       // const container = $('#mark_suggestions');
       // container.empty();
       // layers[0].marks.forEach(dataURL => {
@@ -137,13 +157,11 @@
     console.log('Edit with bounds ' + bounds);
     // get previous state of change area
     const selections_p0 = getChangeSelections(sketches.stored, bounds);
-    const selections_mark = getChangeSelections(sketches.temp, bounds);
     const mark = sketches.temp.get(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
 
     const markDataUrl = [sketches.allPurpose].map(p => {
       const markSize = Math.max(mark.width, mark.height);
       p.resizeCanvas(markSize, markSize);
-      console.log('mark size', mark.width, mark.height);
       p.background(255);
       p.image(mark, (markSize - mark.width) / 2, (markSize - mark.height) / 2);
       const dataURL = p.canvas.toDataURL();
@@ -161,13 +179,16 @@
     if (isAI) {
       sketches.allPurpose.pixels.forEach((v, i) => {
         if ((i % 4) === 1 || (i % 4) === 2) {
-          sketches.allPurpose.pixels[i] = 255;
+          sketches.allPurpose.pixels[i] = 120;
         }
       });
     } else {
       sketches.allPurpose.pixels.forEach((v, i) => {
-        if ((i % 4) === 1 || (i % 4) === 0) {
-          sketches.allPurpose.pixels[i] = 255;
+        if ((i % 4) === 0) {
+          sketches.allPurpose.pixels[i] = 165;
+        }
+        if ((i % 4) === 1) {
+          sketches.allPurpose.pixels[i] = 80;
         }
       });
     }
@@ -240,7 +261,19 @@
 
     // Copy to temp and trigger change
     sketches.temp.image(markBlack, 0, 0);
-    onChange(lastMarkBounds[i], true);
+
+    const w0 = lastBounds[0][2] - lastBounds[0][0];
+    const h0 = lastBounds[0][3] - lastBounds[0][1];
+    const wi = lastBounds[i][2] - lastBounds[i][0];
+    const hi = lastBounds[i][3] - lastBounds[i][1];
+    const diffW = wi - w0;
+    const diffH = hi - h0;
+
+    const startX = lastBounds[i][0] + Math.floor(diffW / 2);
+    const startY = lastBounds[i][1] + Math.floor(diffH / 2);
+    const newBounds = [startX, startY, startX + w0, startY + h0];
+
+    onChange(newBounds, true);
   }
 
   function getSketch() {
@@ -344,10 +377,15 @@
       // If mouse is not pressed, and it was being pressed at the last draw, trigger on change and clear
       if (!p.mouseIsPressed) {
         if (bounds) {
-          const pad = 15;
-          // const pad = 0;
-          bounds = [Math.max(0, bounds[0] - pad), Math.max(0, bounds[1] - pad), Math.min(p.width - 1, bounds[2] + pad), Math.min(p.height - 1, bounds[3] + pad)];
-          onChange(bounds);
+          const markPad = 10;
+          const markPadAdjust = Math.min(bounds[0], bounds[1], p.width - bounds[2], p.height - bounds[3], markPad);
+          const markBounds = [bounds[0] - markPadAdjust, bounds[1] - markPadAdjust, bounds[2] + markPadAdjust, bounds[3] + markPadAdjust];
+          // grow the pads up to 45, if not near border
+          // const pad = 45;
+          // const padAdjust = Math.min(bounds[0], bounds[1], p.width - bounds[2], p.height - bounds[3], pad);
+          // const beforeBounds = [bounds[0] - padAdjust, bounds[1] - padAdjust, bounds[2] + padAdjust, bounds[3] + padAdjust];
+
+          onChange(markBounds);
         }
         bounds = null;
       }
@@ -355,28 +393,57 @@
   }
   new p5(sketch_temp, document.getElementById('sketch_temp'));
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'a') {
-      if ($('#marks_record').hasClass('hidden')) {
-        $('#marks_record').removeClass('hidden');
-      } else {
-        $('#marks_record').addClass('hidden');
-      }
+  async function pause(t) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, t);
+    });
+  }
+
+  async function downloadCanvases() {
+    const date = Date.now();
+    const canvases = $('#screenshot canvas');
+
+    for (let i = 0; i < canvases.length; i += 1) {
+      console.log(i);
+      let downloadLink = document.createElement('a');
+      downloadLink.setAttribute('download', 'erik_image' + date + '_' + i + '.png');
+      let dataURL = canvases[i].toDataURL('image/png');
+      let url = dataURL.replace(/^data:image\/png/,'data:application/octet-stream');
+      downloadLink.setAttribute('href', url);
+      downloadLink.click();
+      await pause(100);
     }
+  }
+
+  document.addEventListener('keydown', e => {
+    // if (e.key === 'a') {
+    //   if ($('#marks_record').hasClass('hidden')) {
+    //     $('#marks_record').removeClass('hidden');
+    //   } else {
+    //     $('#marks_record').addClass('hidden');
+    //   }
+    // }
 
     if (e.key === 'q') {
       if ($('.change_imgs').hasClass('hidden')) {
         $('.change_imgs').removeClass('hidden');
         $('.debug_mark').removeClass('hidden');
-        $('#mark_matches').removeClass('hidden');
+        $('#marks_record').removeClass('hidden');
       } else {
         $('.change_imgs').addClass('hidden');
         $('.debug_mark').addClass('hidden');
-        $('#mark_matches').addClass('hidden');
+        $('#marks_record').addClass('hidden');
       }
+    }
+
+    if (e.key === 's') {
+      // save record
+      downloadCanvases();
     }
   });
   $('.change_imgs').addClass('hidden');
   $('.debug_mark').addClass('hidden');
-  $('#mark_matches').addClass('hidden');
+  $('#marks_record').addClass('hidden');
 }());
