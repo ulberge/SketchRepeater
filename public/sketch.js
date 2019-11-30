@@ -88,17 +88,17 @@
     await lineTracer.trace(p, position, dataURL, numLines, speed, padding);
     toDraw -= 1;
 
-    if (toDraw === 0) {
-      $('.change_imgs').removeClass('hidden');
-      $('.debug_mark').removeClass('hidden');
-      $('#marks_record').removeClass('hidden');
-      html2canvas(document.querySelector('#view')).then(canvas => {
-        $('#screenshot').append(canvas);
-      });
-      $('.change_imgs').addClass('hidden');
-      $('.debug_mark').addClass('hidden');
-      $('#marks_record').addClass('hidden');
-    }
+    // if (toDraw === 0) {
+    //   $('.change_imgs').removeClass('hidden');
+    //   $('.debug_mark').removeClass('hidden');
+    //   $('#marks_record').removeClass('hidden');
+    //   html2canvas(document.querySelector('#view')).then(canvas => {
+    //     $('#screenshot').append(canvas);
+    //   });
+    //   $('.change_imgs').addClass('hidden');
+    //   $('.debug_mark').addClass('hidden');
+    //   $('#marks_record').addClass('hidden');
+    // }
   }
 
   function getActions(befores, mark, afters, imgs, bounds, n=1) {
@@ -126,10 +126,10 @@
         const selectionBounds = getSelectionBoundsForLayer(bounds, i);
         const w = selectionBounds[2] - selectionBounds[0];
         const h = selectionBounds[3] - selectionBounds[1];
-        debug.stroke(debug.color(selectionColors[i]));
-        debug.strokeWeight(2);
-        debug.noFill();
-        debug.rect(x, y, w, h);
+        // debug.stroke(debug.color(selectionColors[i]));
+        // debug.strokeWeight(2);
+        // debug.noFill();
+        // debug.rect(x, y, w, h);
 
         // Trace out lines on overlay
         const numLines = 4;
@@ -153,6 +153,16 @@
     });
   }
 
+  function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+  }
+
   function onChange(bounds, isAI=false) {
     console.log('Edit with bounds ' + bounds);
     // get previous state of change area
@@ -169,6 +179,24 @@
     })[0];
 
     const temp = sketches.temp.get();
+
+    // Create "human copy"
+    sketches.ai[4].image(temp, 0, 0);
+
+    const prev_store = sketches.s1_canv.get();
+    sketches.s0_canv.image(prev_store, 0, 0);
+
+    const stored = sketches.stored.get();
+    sketches.s1_canv.image(stored, 0, 0);
+
+    // rearrange
+    const shuff = shuffleArray($('.ai_sketches > div'));
+    $('.ai_sketches').append(shuff);
+    $('.main_canvas').hide();
+    html2canvas(document.querySelector('#view')).then(canvas => {
+      $('#screenshot').append(canvas);
+    });
+    $('.main_canvas').show();
 
     // write temp to record
     // tint first to indicate source
@@ -313,6 +341,10 @@
     sketches.ai_overlay.push(new p5(getSketch(), document.getElementById('sketch_ai' + i + '_overlay')));
     $('#sketch_ai' + i + '_debug').click(() => selectAI(i));
   }
+  // sketches.ai.push(new p5(getSketch(), document.getElementById('sketch_ai4')));
+
+  sketches.s0_canv = new p5(getSketch(), document.getElementById('s0_canv'));
+  sketches.s1_canv = new p5(getSketch(), document.getElementById('s1_canv'));
 
   // Add extra canvases for other uses
   sketches.compMarks = new p5(getSketch(), document.getElementById('sketch_comp_marks'));
@@ -408,7 +440,7 @@
     for (let i = 0; i < canvases.length; i += 1) {
       console.log(i);
       let downloadLink = document.createElement('a');
-      downloadLink.setAttribute('download', 'erik_image' + date + '_' + i + '.png');
+      downloadLink.setAttribute('download', 'survey_image' + date + '_' + i + '.png');
       let dataURL = canvases[i].toDataURL('image/png');
       let url = dataURL.replace(/^data:image\/png/,'data:application/octet-stream');
       downloadLink.setAttribute('href', url);

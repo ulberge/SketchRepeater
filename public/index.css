@@ -1,5 +1,6 @@
 body {
-  background: #ababab !important;
+  /*background: #ababab !important;*/
+  background: #fff !important;
   text-align: center;
 }
 
@@ -81,4 +82,12 @@ table.actionDebug td {
 
 #view {
   margin-bottom: 100px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#s1_canv canvas, #s0_canv canvas {
+  width: 301px !important;
 }

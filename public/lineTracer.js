@@ -517,7 +517,8 @@
       if (previousPos) {
         p.push();
         p.translate(position.x, position.y);
-        p.stroke('#660000');
+        // p.stroke('#660000');
+        p.stroke(0);
         p.strokeWeight(1.3);
         p.line(previousPos.x, previousPos.y, pos.x, pos.y);
         p.pop();

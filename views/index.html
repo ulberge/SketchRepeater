@@ -16,11 +16,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/public/index.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-2.2.1.min.js"
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"> -->
+    <!-- <script src="https://code.jquery.com/jquery-2.2.1.min.js"
             integrity="sha256-gvQgAFzTH6trSrAWoH1iPo9Xc96QxSZ3feW6kem+O00="
-            crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/p5.min.js"></script>
+            crossorigin="anonymous"></script> -->
+
+    <link rel="stylesheet" href="/public/bootstrap.min.css">
+    <script src="/public/jquery.min.js"></script>
+    <script src="/public/p5.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/p5.min.js"></script> -->
 
   </head>
   <body>
@@ -34,22 +38,27 @@
               <span id="boid_test_draw" class=""></span>
             </div>
           </div>
-          <div class="col-md-12">
-            <div class="col-md-4" style="text-align: right;">
-                <div id="marks_record" class=""></div>
+          <div class="col-md-4 hidden" style="text-align: right;">
+              <div id="marks_record" class=""></div>
+          </div>
+          <div class="col-md-4 hidden">
+            <div class="change_imgs">
+              <div class="p0"></div>
+              <div class="marks"></div>
+              <div class="p1"></div>
             </div>
-            <div class="col-md-4" style="text-align: center;">
+          </div>
+          <div class="col-md-12">
+            <div class="col-md-3" style="text-align: center; display: inline-block">
               <div class="main_canvas" style="position: relative">
                 <div id="sketch_stored"></div>
                 <div id="sketch_temp" class="overlay"></div>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="change_imgs">
-                <div class="p0"></div>
-                <div class="marks"></div>
-                <div class="p1"></div>
-              </div>
+            <div class="col-md-8" style="display: inline-block">
+              <div id="s0_canv" style="display: inline-block"></div>
+              <div style="display: inline-block;font-size: 30px;vertical-align: top;margin-top: 100px;">-></div>
+              <div id="s1_canv" style="display: inline-block"></div>
             </div>
           </div>
         </div>
@@ -96,7 +105,7 @@
                 <div id="ai3_debug_before" class="debug_mark"></div>
                 <div id="ai3_debug_before2" class="debug_mark"></div>
               </div>
-              <div style="display: none;position: relative;">
+              <div style="display: inline-block;position: relative;">
                 <div>
                   <span id="sketch_ai4"></span>
                   <span id="sketch_ai4_overlay" class="overlay"></span>
