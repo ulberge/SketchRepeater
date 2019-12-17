@@ -124,17 +124,19 @@ def load_layers(filepath):
         name='conv4'
     ))
 
-    # L5
-    model_layers.append(layers.Conv2D(
-        256,
-        (3, 3),
-        strides=1,
-        padding='same',
-        kernel_initializer=initializers.Constant(weights['conv5']),
-        bias_initializer=initializers.Constant(biases['conv5']),
-        activation='relu',
-        name='conv5'
-    ))
+    # Do not need any of the layers past 4 for this project
+
+    # # L5
+    # model_layers.append(layers.Conv2D(
+    #     256,
+    #     (3, 3),
+    #     strides=1,
+    #     padding='same',
+    #     kernel_initializer=initializers.Constant(weights['conv5']),
+    #     bias_initializer=initializers.Constant(biases['conv5']),
+    #     activation='relu',
+    #     name='conv5'
+    # ))
     # model_layers.append(layers.MaxPooling2D(
     #     pool_size=(3, 3),
     #     strides=2,
@@ -190,21 +192,6 @@ def load_layers(filepath):
     return model_layers
 
 
-def get_avg_pools(activations, pool_size, strides):
-    # print('pool_size', pool_size)
-    # print('strides', strides)
-    # print('acts shape', activations.shape)
-    pool_layer = layers.AveragePooling2D(
-        pool_size=pool_size,
-        strides=strides,
-        padding='same'
-    )
-    pools = pool_layer(activations)
-    # print('pools shape', pools.shape)
-
-    return pools
-
-
 layers_meta = [
     [
         # params for L1
@@ -247,66 +234,6 @@ layers_meta = [
         36  # padding
     ]
 ]
-
-L2_concepts = [
-    [28],
-    [24, 81],
-    [23, 30],
-    [8],
-    [5, 43, 122],
-    [124],
-    [40],
-    [81, 105],
-    [32, 81, 103, 113],
-    [75, 81],
-    [24, 56, 118],
-    [8, 13, 81],
-    [80],
-    [57, 97],
-    [31],
-    [117],
-    [81, 107],
-    [67, 78],
-    [36],
-    [29],
-    [104],
-    [8, 34],
-    [11, 21, 125],
-    [24, 111],
-    [43],
-    [22],
-    [38, 89],
-    [0, 8],
-    [2],
-    [72],
-    [81, 107],
-    [97],
-    [48],
-    [90, 96],
-    [63, 108],
-    [11, 111],
-    [3, 29, 75, 81],
-    [68],
-    [24, 29, 81, 118],
-    [83],
-    [8, 13, 42],
-    [6, 30, 67],
-    [13, 22, 49, 81],
-    [115],
-    [81, 121],
-    [7],
-    [101],
-    [36, 91],
-    [75],
-    [19],
-    [79],
-    [8, 38],
-    [123],
-    [24, 61, 111],
-    [10],
-    [30],
-]
-
 
 if __name__ == '__main__':
     load_model()
