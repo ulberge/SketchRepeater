@@ -1,4 +1,4 @@
-# SketchRepeat
+# SketchRepeater
 
 ![gif of interaction](http://www.erikulberg.com/imgs/gifs/sketchrepeat1.gif)
 
