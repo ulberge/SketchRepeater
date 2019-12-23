@@ -29,6 +29,18 @@ The AI suggestions are most relevant in images of patterns or repetitive landsca
 ![how much did the AI contribute 1?](http://www.erikulberg.com/imgs/stills/sketchrepeat_examples1.png)
 ![how much did the AI contribute 2?](http://www.erikulberg.com/imgs/stills/sketchrepeat_examples2.png)
 
-## Setup
+## Running the code
 
-In order to actually run this, one would need to download
+**Before setup:**
+- Download the pre-trained weights for Sketch-A-Net and the TU Berlin dataset [here](http://sketchx.eecs.qmul.ac.uk/downloads/) (the program uses dataset_without_order_info_224.mat and model_without_order_info_224.mat)
+- Download the ndjson files for [Google "Quick, Draw"](https://quickdraw.withgoogle.com/data) for circles, clouds, hexagos, lines, octagons, pillows, squares, squiggles, triangles, and zigzags. 
+- Put all these files in the data/ folder.
+
+**Setup:**
+cd data
+python sketch_process.py
+
+**Run server:**
+python server.py
+
+In order for this to run well, a lot of tuning of various parameters has to happen.
