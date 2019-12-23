@@ -2,3 +2,4 @@
 *.ann
 *.txt
 *.ndjson
+*_debug.png

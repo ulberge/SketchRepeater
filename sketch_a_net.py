@@ -1,29 +1,29 @@
 import os
 import scipy.io as sio
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models, initializers
 
-"""
+'''
 An implementation of Sketch-a-Net in TensorFlow 2 with Keras
 
 Sketch-a-Net: A Deep Neural Network that Beats Humans
 https://link-springer-com.proxy.library.cmu.edu/article/10.1007/s11263-016-0932-3
 
-Used this repo for some code and as reference: https://github.com/ayush29feb/Sketch-A-XNORNet/
-"""
+Used this repo as reference for Python implementation:
+https://github.com/ayush29feb/Sketch-A-XNORNet/
+'''
 
 
 def load_pretrained(filepath):
-    """
-    From https://github.com/ayush29feb/Sketch-A-XNORNet/
-    Loads the pretrained weights and biases from the pretrained model available
-    on http://www.eecs.qmul.ac.uk/~tmh/downloads.html
-    Args:
-        Takes in the filepath for the pretrained .mat filepath
+    '''Loads the pretrained weights and biases from the pretrained model available on http://www.eecs.qmul.ac.uk/~tmh/downloads.html
+
+    Keyword arguments:
+        filepath -- the pretrained .mat filepath
 
     Returns:
-        Returns the dictionary with all the weights and biases for respective layers
-    """
+        Returns the dictionary with all the weights and biases
+    '''
     if filepath is None or not os.path.isfile(filepath):
         print('Pretrained Model Not Available!')
         return None, None
@@ -40,25 +40,48 @@ def load_pretrained(filepath):
     return (weights, biases)
 
 
-def load_model(filepath):
-    model = models.Sequential()
+def get_layers_output(layers, layer_names, img):
+    '''Get the activations for the layers in layer_names for this img and this
+    set of layers
 
-    layers = load_layers(filepath)
+    Keyword arguments:
+        layers -- the layers of the CNN to run the image through
+        layer_names -- names of the layers to save
+        img -- image to run through the CNN
+
+    Returns:
+        Returns a list with the resulting activations for the layers in layer_names.
+    '''
+    # format for tf
+    curr = np.array([img, ])
+    # execute the layers
+    acts = []
+    count = 0
     for layer in layers:
-        model.add(layer)
+        # run layer
+        curr = layer(curr)
 
-    model.compile(
-        optimizer='adam',
-        loss='sparse_categorical_crossentropy',
-        metrics=['accuracy']
-    )
+        # only save matching layers
+        if layer.name in layer_names:
+            acts.append(curr)
+            count += 1
 
-    model.summary()
+        # cut short if we already matched all the layers we care about
+        if count == len(layer_names):
+            return acts
 
-    return model
+    return acts
 
 
 def load_layers(filepath):
+    '''Loads the layers for Sketch-A-Net with pretrained weights and biases
+
+    Keyword arguments:
+        filepath -- the pretrained .mat filepath
+
+    Returns:
+        Returns a list of TF layers for Sketch-A-Net
+    '''
     weights, biases = load_pretrained(filepath)
 
     model_layers = []
@@ -190,6 +213,31 @@ def load_layers(filepath):
     # model_layers.append(layers.Dense(250, activation='softmax'))
 
     return model_layers
+
+# Not necessary for this project
+# def load_model(filepath):
+#     '''Creates a TF model for Sketch-A-Net from pre-trained weights
+#     Keyword arguments:
+#         filepath -- the pretrained .mat filepath
+
+#     Returns:
+#         Returns the TF model
+#     '''
+#     model = models.Sequential()
+
+#     layers = load_layers(filepath)
+#     for layer in layers:
+#         model.add(layer)
+
+#     model.compile(
+#         optimizer='adam',
+#         loss='sparse_categorical_crossentropy',
+#         metrics=['accuracy']
+#     )
+
+#     model.summary()
+
+#     return model
 
 
 layers_meta = [

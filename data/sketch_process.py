@@ -96,7 +96,7 @@ def vector_to_raster(vector_images, side=28, line_diameter=16, max_padding=4, bg
 def load_from(type, num=400, size=105, max_padding=20, line_radius=2):
     print('loading ' + type)
     # load from file-like objects
-    with open('./data/full_simplified_' + type + '.ndjson') as f:
+    with open('./full_simplified_' + type + '.ndjson') as f:
         data = ndjson.load(f)
 
         vecs = []
@@ -157,7 +157,7 @@ def rotate_random(img, amt):
 if __name__ == '__main__':
     all_imgs = []
 
-    num = 400
+    num = 40
     lines = load_from('line', num, max_padding=4)
     all_imgs.extend(lines)
 
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     # zigzags cut in half both ways -> multi curves?
     # clouds cut in half both ways -> curves
     wholes = []
-    num = 150
+    num = 15
     wholes.extend(load_from('circle', num))
     wholes.extend(load_from('square', num))
     wholes.extend(load_from('zigzag', num))
@@ -253,8 +253,6 @@ if __name__ == '__main__':
             all_imgs_f.append(img)
     save_imgs(all_imgs_f, 'sketches')
 
-    with open('./data/sketchrnn_corpus.txt', 'wb') as fp:
+    with open('./sketchrnn_corpus.txt', 'wb') as fp:
         to_save = all_imgs
         pickle.dump(to_save, fp)
-
-

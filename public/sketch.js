@@ -2,9 +2,7 @@
   const canvasSizeX = 300;
   const canvasSizeY = 250;
 
-  const selectionSizes = [15, 45, 81, 105, 129];
-  // const selectionColors = ['#A74661', '#956C89', '#8490B0', '#71B6D7', '#67CBEF'];
-  // const selectionColors = ['#A74661', '#956C89', '#8490B0', '#71B6D7', '#67CBEF'];
+  const selectionSizes = [15, 45, 81, 105];
   const selectionColors = ['#67CBEF', '#67CBEF', '#67CBEF', '#67CBEF', '#67CBEF'];
   const sketches = {
     stored: null,
@@ -27,13 +25,12 @@
     [ 'conv1', 3, 15, 0 ], // layer_name, stride, f_size, padding
     [ 'conv2', 6, 45, 0 ],
     [ 'conv3', 12, 81, 12 ],
-    [ 'conv4', 12, 105, 24 ],
-    [ 'conv5', 12, 129, 36 ]
+    [ 'conv4', 12, 105, 24 ]
   ];
 
   // Store the bounds of the most recent mark for each AI
-  const lastBounds = [[], [], [], [], []];
-  const lastMarkBounds = [[], [], [], [], []];
+  const lastBounds = [[], [], [], []];
+  const lastMarkBounds = [[], [], [], []];
 
   // Given a container and some dataURLs, clear the container and add the dataURLs as images to that container
   function setContentsToDataURLs(container, dataUrls) {
@@ -87,29 +84,15 @@
     toDraw += 1;
     await lineTracer.trace(p, position, dataURL, numLines, speed, padding);
     toDraw -= 1;
-
-    if (toDraw === 0) {
-      $('.change_imgs').removeClass('hidden');
-      $('.debug_mark').removeClass('hidden');
-      $('#marks_record').removeClass('hidden');
-      html2canvas(document.querySelector('#view')).then(canvas => {
-        $('#screenshot').append(canvas);
-      });
-      // $('.change_imgs').addClass('hidden');
-      // $('.debug_mark').addClass('hidden');
-      // $('#marks_record').addClass('hidden');
-    }
   }
 
-  function getActions(befores, mark, afters, imgs, bounds, n=1) {
+  function getActions(befores, mark, afters, imgs, bounds) {
     console.log('fetching actions...');
-    const data = { befores, mark, afters, imgs, bounds, n };
+    const data = { befores, mark, afters, imgs };
     const befores_prev = befores;
 
     $.get('/actions', data, function(result) {
       const layers = result;
-
-      setContentsToDataURLs($('#mark_matches'), layers[0].marks);
 
       for (let i = 0; i < 4; i += 1) {
         const layer = layers[i];
@@ -138,18 +121,9 @@
 
         // Draw debug stuff
         setContentsToDataURLs($('#ai' + i + '_debug_mark'), [before, mark, after]);
-        // setContentsToDataURLs($('#ai' + i + '_debug_before'), befores);
-        // setContentsToDataURLs($('#ai' + i + '_debug_before2'), [befores_prev[i]]);
         lastBounds[i] = [x, y, x + w, y + h];
         lastMarkBounds[i] = [x, y, x + w, y + h];
       }
-      // const container = $('#mark_suggestions');
-      // container.empty();
-      // layers[0].marks.forEach(dataURL => {
-      //   const img = new Image();
-      //   img.src = 'data:image/png;base64,' + dataURL;
-      //   container.append(img);
-      // });
     });
   }
 
@@ -225,9 +199,9 @@
     });
 
     // draw to display imgs
-    setContentsToDataURLs($('.change_imgs .p0'), [befores[4]]);
+    setContentsToDataURLs($('.change_imgs .p0'), [befores[3]]);
     setContentsToDataURLs($('.change_imgs .marks'), [markDataUrl]);
-    setContentsToDataURLs($('.change_imgs .p1'), [afters[4]]);
+    setContentsToDataURLs($('.change_imgs .p1'), [afters[3]]);
 
     // for each ai canvas, get suggestions at the provided layers
     const imgs = sketches.ai.map(p => p.canvas.toDataURL());
@@ -303,7 +277,7 @@
   }
 
   // For each layer
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 4; i += 1) {
     const containerId = '#L' + (i + 1) + '_matches';
     new p5(getSelectionSketch((i + 1), 0), $(containerId + ' .selection.p0')[0]);
     new p5(getSelectionSketch((i + 1), 1), $(containerId + ' .selection.p1')[0]);
@@ -380,10 +354,6 @@
           const markPad = 10;
           const markPadAdjust = Math.min(bounds[0], bounds[1], p.width - bounds[2], p.height - bounds[3], markPad);
           const markBounds = [bounds[0] - markPadAdjust, bounds[1] - markPadAdjust, bounds[2] + markPadAdjust, bounds[3] + markPadAdjust];
-          // grow the pads up to 45, if not near border
-          // const pad = 45;
-          // const padAdjust = Math.min(bounds[0], bounds[1], p.width - bounds[2], p.height - bounds[3], pad);
-          // const beforeBounds = [bounds[0] - padAdjust, bounds[1] - padAdjust, bounds[2] + padAdjust, bounds[3] + padAdjust];
 
           onChange(markBounds);
         }
@@ -393,39 +363,7 @@
   }
   new p5(sketch_temp, document.getElementById('sketch_temp'));
 
-  async function pause(t) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, t);
-    });
-  }
-
-  async function downloadCanvases() {
-    const date = Date.now();
-    const canvases = $('#screenshot canvas');
-
-    for (let i = 0; i < canvases.length; i += 1) {
-      console.log(i);
-      let downloadLink = document.createElement('a');
-      downloadLink.setAttribute('download', 'claire_image' + date + '_' + i + '.png');
-      let dataURL = canvases[i].toDataURL('image/png');
-      let url = dataURL.replace(/^data:image\/png/,'data:application/octet-stream');
-      downloadLink.setAttribute('href', url);
-      downloadLink.click();
-      await pause(100);
-    }
-  }
-
   document.addEventListener('keydown', e => {
-    // if (e.key === 'a') {
-    //   if ($('#marks_record').hasClass('hidden')) {
-    //     $('#marks_record').removeClass('hidden');
-    //   } else {
-    //     $('#marks_record').addClass('hidden');
-    //   }
-    // }
-
     if (e.key === 'q') {
       if ($('.change_imgs').hasClass('hidden')) {
         $('.change_imgs').removeClass('hidden');
@@ -436,11 +374,6 @@
         $('.debug_mark').addClass('hidden');
         $('#marks_record').addClass('hidden');
       }
-    }
-
-    if (e.key === 's') {
-      // save record
-      downloadCanvases();
     }
   });
   $('.change_imgs').addClass('hidden');
