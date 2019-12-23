@@ -12,7 +12,7 @@ This project presents an interactive drawing tool that provides suggestions by e
 
 ## How it Works
 
-When a user makes a mark, the system records the mark, the state of the canvas at its location before the mark, and the state after the mark. The before state is matched to other areas in the current canvas and the mark is matched to a corpus of chopped up human sketches (from the TU Berlin dataset and the Google "Quick, Draw" dataset). These matches are used to generate suggestions which are compared to the after state. The best suggestions are sent back and displayed.
+When a user makes a mark, the system records the mark, the state of the canvas at its location before the mark, and the state after the mark. The before state is matched to other areas in the current canvas and the mark is matched to a corpus of chopped up human sketches (from the [TU Berlin dataset](http://cybertron.cg.tu-berlin.de/eitz/projects/classifysketch/) and the [Google "Quick, Draw" dataset](https://quickdraw.withgoogle.com/data)). "Matches" are judged by comparing the distance between activations from intermediate layers of [Sketch-A-Net](http://sketchx.eecs.qmul.ac.uk/downloads/), a convolutional neural network. The matches are used to generate suggestions which are compared to the after state. The best suggestions are sent back and displayed.
 
 Below is a debug view to demonstrate functionality. The user draws in the top center. AI suggestions appear in the four canvases below. If the user selects an AI mark suggestion, it is added as the next mark and new suggestions are fetched.
 
@@ -29,3 +29,6 @@ The AI suggestions are most relevant in images of patterns or repetitive landsca
 ![how much did the AI contribute 1?](http://www.erikulberg.com/imgs/stills/sketchrepeat_examples1.png)
 ![how much did the AI contribute 2?](http://www.erikulberg.com/imgs/stills/sketchrepeat_examples2.png)
 
+## Setup
+
+In order to actually run this, one would need to download
