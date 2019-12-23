@@ -1,6 +1,6 @@
 # SketchRepeat
 
-![gif of interaction](http://www.erikulberg.com/imgs/gifs/sketchrepeat2.gif)
+![gif of interaction](http://www.erikulberg.com/imgs/gifs/sketchrepeat1.gif)
 
 ## Description
 
@@ -16,7 +16,7 @@ When a user makes a mark, the system records the mark, the state of the canvas a
 
 Below is a debug view to demonstrate functionality. The user draws in the top center. AI suggestions appear in the four canvases below. If the user selects an AI mark suggestion, it is added as the next mark and new suggestions are fetched.
 
-![gif of interaction 2](http://www.erikulberg.com/imgs/gifs/sketchrepeat1.gif)
+![gif of interaction 2](http://www.erikulberg.com/imgs/gifs/sketchrepeat2.gif)
 
 In the following example, a user has just added a circle on top of the triangle. The “before”, mark, and “after” images can be seen on the right. The AI suggestions are displayed below along with their “before”, mark, and “after” images. The AIs take the mark and the location of the match and use an agent-based algorithm to draw something similar to the mark in a matching style.
 
