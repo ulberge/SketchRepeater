@@ -26,5 +26,6 @@ In the following example, a user has just added a circle on top of the triangle.
 
 The AI suggestions are most relevant in images of patterns or repetitive landscapes. In the examples below, the human marks are in orange and AI marks are in blue.
 
-![how much did the AI contribute?](http://www.erikulberg.com/imgs/stills/sketchrepeat_examples2.png)
+![how much did the AI contribute 1?](http://www.erikulberg.com/imgs/stills/sketchrepeat_examples1.png)
+![how much did the AI contribute 2?](http://www.erikulberg.com/imgs/stills/sketchrepeat_examples2.png)
 
