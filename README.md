@@ -8,9 +8,7 @@ Open-ended sketching helps to explore or create new ideas. While AI systems such
 
 This project presents an interactive drawing tool that provides suggestions by extrapolating the user's previous action. It makes the strong assumption that the user will want to semantically repeat their actions. The goal of the tool is to "play along" with the designer as they move towards an undefined goal. The hope is that the designer finds the AI suggestions useful and inspiring.
 
-## Technologies
-
-TensorFlow, Spotify ANNOY, Python, JS
+**Technologies:** TensorFlow, Spotify ANNOY, Python, JS, p5.js
 
 ## How it Works
 
